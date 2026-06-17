@@ -3,8 +3,10 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
-FILE_PATH="$(guard_field file_path)"
-CMD="$(guard_field command)"
+guard_require file_path   # fail-closed if a key is present but unparseable
+guard_require command
+FILE_PATH="$(json_field file_path)"
+CMD="$(json_field command)"
 TARGET="${FILE_PATH}${CMD:+ $CMD}"
 
 PATTERNS=(

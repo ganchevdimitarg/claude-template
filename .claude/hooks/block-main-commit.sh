@@ -3,7 +3,8 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
-CMD="$(guard_field command)"
+guard_require command
+CMD="$(json_field command)"
 echo "$CMD" | grep -qE 'git\s+commit' || exit 0
 
 BRANCH=$(git branch --show-current 2>/dev/null)

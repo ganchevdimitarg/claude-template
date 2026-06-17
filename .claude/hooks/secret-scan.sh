@@ -3,7 +3,8 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
-CMD="$(guard_field command)"
+guard_require command
+CMD="$(json_field command)"
 echo "$CMD" | grep -qE 'git\s+commit' || exit 0
 git rev-parse HEAD >/dev/null 2>&1 || exit 0
 [ -z "$(git diff --staged 2>/dev/null)" ] && exit 0

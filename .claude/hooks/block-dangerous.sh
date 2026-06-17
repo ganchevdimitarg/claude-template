@@ -3,8 +3,9 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
-CMD="$(guard_field command)"
-[ -z "$CMD" ] && exit 0   # not a Bash call / no command -> nothing to guard
+guard_require command     # fail-closed if "command" present but unparseable
+CMD="$(json_field command)"
+[ -z "$CMD" ] && exit 0   # key absent / genuinely empty -> nothing to guard
 
 # rm -rf / rm -fr (both flag orderings)
 echo "$CMD" | grep -qE '(^|\s|/)rm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|--recursive.*--force|--force.*--recursive)' && \
