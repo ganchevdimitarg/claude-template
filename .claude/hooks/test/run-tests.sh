@@ -57,6 +57,17 @@ assert_exit "warn-generated blocks generated-sources"   2 warn-generated-files.s
 assert_exit "warn-generated allows normal java"         0 warn-generated-files.sh '{"file_path":"src/main/java/Foo.java"}'
 assert_exit "audit-log always allows"                   0 audit-log.sh '{"command":"ls"}'
 
+# --- maven / advisory hooks resolve module and never block ---
+assert_exit "checkstyle non-java no-op"   0 checkstyle-on-save.sh '{"file_path":"README.md"}'
+assert_exit "flyway non-sql no-op"        0 flyway-validate.sh '{"file_path":"src/main/java/Foo.java"}'
+assert_exit "n+1 non-java no-op"          0 n-plus-one-check.sh '{"file_path":"pom.xml"}'
+assert_exit "api-contract non-java no-op" 0 api-contract-check.sh '{"file_path":"pom.xml"}'
+assert_exit "avro non-avsc no-op"         0 avro-validate.sh '{"file_path":"Foo.java"}'
+
+# resolve_module: a single-module repo file resolves to "."
+lib_mod() { INPUT='{}'; . "$HOOKS_DIR/_lib.sh"; resolve_module "$1"; }
+assert_lib "resolve_module root file -> ." "." lib_mod "src/main/java/Foo.java"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
