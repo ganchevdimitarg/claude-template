@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "url",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "description": "GitHub MCP — read PRs, issues, CI status. Active in all modules.",
+      "note": "Requires GITHUB_TOKEN env var with repo scope."
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${POSTGRES_MCP_URL}"],
+      "description": "Postgres MCP — inspect live schema, indexes, row counts before writing migrations.",
+      "note": "Set POSTGRES_MCP_URL=postgresql://user:pass@localhost:5432/dbname. Active in order-service, payment-service, notification-service.",
+      "env": {
+        "POSTGRES_MCP_URL": "${POSTGRES_MCP_URL}"
+      }
+    },
+    "schema-registry": {
+      "type": "url",
+      "url": "${SCHEMA_REGISTRY_MCP_URL}",
+      "description": "Confluent Schema Registry MCP — query registered Avro schemas, check compatibility.",
+      "note": "Set SCHEMA_REGISTRY_MCP_URL. Active in common-events, any service producing Kafka events.",
+      "status": "optional — connect only if Schema Registry MCP server is deployed"
+    },
+    "jira": {
+      "type": "url",
+      "url": "${JIRA_MCP_URL}",
+      "description": "Jira MCP — read ticket descriptions, acceptance criteria, and linked subtasks.",
+      "note": "Set JIRA_MCP_URL and JIRA_TOKEN. inject-git-context.sh extracts issue number from branch name.",
+      "status": "optional — connect if team uses Jira"
+    }
+  },
+  "usage": {
+    "how_to_activate": "Add server names to .claude/settings.json under 'mcpServers' or use Claude Code's /mcp command.",
+    "module_mapping": {
+      "api-gateway":          ["github"],
+      "catalog-service":      ["github"],
+      "order-service":        ["github", "postgres", "jira"],
+      "payment-service":      ["github", "postgres", "jira"],
+      "notification-service": ["github", "postgres"],
+      "common-events":        ["github", "schema-registry"]
+    }
+  }
+}
