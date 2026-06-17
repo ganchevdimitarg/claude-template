@@ -17,11 +17,6 @@
 
 ## Active work
 - Branch: `docs/claude-config-hardening`
-- .claude/hooks/block-dangerous.sh
-- .claude/hooks/block-main-commit.sh
-- .claude/hooks/protect-secrets.sh
-- .claude/hooks/secret-scan.sh
-- .claude/hooks/test/run-tests.sh
 - MEMORY.md
 
 ## Team preferences
