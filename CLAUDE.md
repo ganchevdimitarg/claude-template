@@ -33,27 +33,7 @@
 - Records **preferred** for: DTOs, commands, query results, API request/response, event payloads, value objects — anything immutable with no JPA/persistence concern (see Lombok section below for canonical examples)
 - Use `String.format()` or text blocks for multiline strings — no string concatenation in hot paths (String Templates, JEP 430, was withdrawn from Java 25)
 
-```java
-// Fan-out with structured concurrency
-try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-var inventory = scope.fork(() -> inventoryClient.get(productId));
-var pricing   = scope.fork(() -> pricingClient.get(productId));
-    scope.join().throwIfFailed();
-    return new ProductView(inventory.get(), pricing.get());
-        }
-
-// ScopedValue for request context
-static final ScopedValue<RequestContext> CTX = ScopedValue.newInstance();
-ScopedValue.where(CTX, new RequestContext(traceId, userId)).run(() -> service.handle(cmd));
-
-// Sealed + pattern match
-sealed interface PaymentResult permits Approved, Declined, Pending {}
-String label = switch (result) {
-  case Approved a  -> "approved:" + a.transactionId();
-  case Declined d  -> "declined:" + d.reason();
-  case Pending  p  -> "pending:" + p.retryAfter();
-};
-```
+@docs/context/java25-patterns.md
 
 ### Lombok
 - `@Value` + `@Builder` on immutable DTOs, commands, events — only when record is not suitable (e.g. needs Jackson custom deserializer or inheritance)
@@ -65,27 +45,7 @@ String label = switch (result) {
 - Never `@ToString` on JPA entities with lazy associations — causes N+1 on log statements
 - Never `@Data` on JPA entities or domain objects with business logic
 
-```java
-// Records — default for all immutable types
-record CreateOrderCommand(UUID customerId, List<OrderItem> items) {
-  CreateOrderCommand { Objects.requireNonNull(customerId); items = List.copyOf(items); }
-}
-record OrderResponse(UUID id, String status, BigDecimal total) {}
-record MoneyAmount(BigDecimal value, Currency currency) {}        // value object
-record PageQuery(int page, int size, String sortBy) {}            // query params
-record PaymentCompletedEvent(UUID orderId, String traceId, String correlationId) {} // Kafka event
-
-// @Value+@Builder only when record is insufficient (custom Jackson builder / no-arg ctor required)
-@Value @Builder
-public class ComplexDto { /* @JsonDeserialize(builder=...) use case */ }
-
-// JPA entities — explicit Lombok only (never @Data)
-@Entity @Getter @Setter @NoArgsConstructor @Table(name = "orders")
-public class Order {
-  @Id @GeneratedValue UUID id;
-  // implement equals/hashCode on @NaturalId or business key
-}
-```
+@docs/context/lombok-records-patterns.md
 
 ### General
 - `@Transactional` on service layer only — never on controllers or repository interfaces
@@ -112,36 +72,12 @@ public class Order {
 - Controller accepts `Pageable` via `@PageableDefault(size = 20, sort = "createdAt", direction = DESC)`
 - Never expose raw `Page<Entity>` — always map to `Page<ResponseRecord>` before wrapping
 
-```java
-record PageResponse<T>(List<T> content, int page, int size, long totalElements, int totalPages) {
-  static <T> PageResponse<T> of(Page<T> p) {
-    return new PageResponse<>(p.getContent(), p.getNumber(), p.getSize(),
-            p.getTotalElements(), p.getTotalPages());
-  }
-}
-```
+@docs/context/pagination-patterns.md
 
 ### Exception hierarchy
-All domain exceptions extend `BusinessException`:
-```java
-public class BusinessException extends RuntimeException {
-  private final HttpStatus status;
-  private final String     code;
-  public BusinessException(HttpStatus status, String code, String message) { ... }
-}
-public class NotFoundException  extends BusinessException {
-  public NotFoundException(String resource, Object id) {
-    super(HttpStatus.NOT_FOUND, "NOT_FOUND", resource + " not found: " + id);
-  }
-}
-public class ConflictException   extends BusinessException {
-  public ConflictException(String message) { super(HttpStatus.CONFLICT, "CONFLICT", message); }
-}
-public class ValidationException extends BusinessException {
-  public ValidationException(String message) { super(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message); }
-}
-```
-`@ControllerAdvice` maps `BusinessException` → problem+json. Never catch and re-throw as `RuntimeException`.
+`BusinessException(HttpStatus, String code, String message)` is the base. Subclasses: `NotFoundException` (404), `ConflictException` (409), `ValidationException` (400).
+`@ControllerAdvice` maps all → problem+json. Never catch and rethrow as `RuntimeException`.
+@docs/context/exceptions.md
 
 ### Input validation
 - Bean Validation constraints (`@NotNull`, `@Size`, `@Pattern`) on record components
@@ -149,16 +85,30 @@ public class ValidationException extends BusinessException {
 - Cross-field / business-rule validation in compact constructor of the record, throwing `ValidationException`
 - Never validate in service layer what can be expressed as a Bean Validation constraint
 
-```java
-record CreateOrderCommand(@NotNull UUID customerId, @NotEmpty List<@Valid OrderItem> items) {
-  CreateOrderCommand {
-    if (items.size() > 50) throw new ValidationException("Order cannot exceed 50 items");
-    items = List.copyOf(items);
-  }
-}
-// Controller:
-@PostMapping ResponseEntity<OrderResponse> create(@RequestBody @Valid CreateOrderCommand cmd) { ... }
-```
+@docs/context/validation-patterns.md
+
+---
+
+## Resilience4j & SLO defaults
+
+Every outbound HTTP call must be wrapped with `@CircuitBreaker` + `@Bulkhead` + `@TimeLimiter`.
+Default thresholds (override per-service in `application.yml`): failure rate 50%, slow call 2s, wait open 30s, half-open 5 calls, bulkhead 10 concurrent, timeout 5s.
+Fallback method must have same signature as original + `Throwable` param.
+@docs/context/resilience.md
+
+---
+
+## Idempotency
+
+All mutating REST endpoints (POST, PUT, PATCH) that cross a service boundary or modify
+persistent state must support idempotency via `Idempotency-Key` header.
+
+- Client sends `Idempotency-Key: <uuid>` on every mutating request
+- Check Redis key `idempotency:<service>:<idempotency-key>` before processing; return cached response on hit
+- On miss: process, store response with 24h TTL, return
+- Key is never per-user — scoped to service only
+- Never implement a POST/PUT/PATCH that mutates without idempotency support
+@docs/context/idempotency.md
 
 ---
 
@@ -173,6 +123,93 @@ record CreateOrderCommand(@NotNull UUID customerId, @NotEmpty List<@Valid OrderI
 
 - Custom metrics via `MeterRegistry` — name pattern: `<service>.<entity>.<action>` e.g. `order.payment.retried`
 - Health indicators: DB, Redis, Kafka — exposed at `/actuator/health` (details for internal only)
+
+---
+
+## Distributed transactions — choreography saga
+
+Never use 2-phase commit or synchronous cross-service writes.
+Use choreography-based sagas via Kafka events:
+- Each service publishes success or failure event after its local transaction
+- Compensating transactions triggered by failure events — no central orchestrator
+- Saga state reconstructed by replaying events — never stored in a shared table
+- Document flows in `docs/sagas/<name>.md` with event sequence and compensations
+
+---
+
+## Feature flags
+
+Gate new behaviour behind feature flags before full rollout:
+- Simple on/off: `@ConditionalOnProperty(name = "features.new-pricing", havingValue = "true")`
+- Runtime toggles: inject `FeatureFlagService` backed by Unleash or a Redis key
+- Flags removed within one sprint of confirmed full rollout — never left permanently
+- Flag names: `features.<service>.<feature>` e.g. `features.order-service.retry-v2`
+- Never gate with a hardcoded `if (ENV == "prod")` — use the flag service
+
+---
+
+## Local development
+
+Infrastructure via Docker Compose at repo root:
+```bash
+docker compose up -d          # starts PG, Mongo, Redis, Kafka, Schema Registry
+./mvnw spring-boot:run -pl order-service   # run a single service
+```
+
+Port conventions (declared in root `docker-compose.yml`):
+| Service | Port |
+|---|---|
+| PostgreSQL | 5432 |
+| MongoDB | 27017 |
+| Redis | 6379 |
+| Kafka | 9092 |
+| Schema Registry | 8081 |
+| api-gateway | 8080 |
+| order-service | 8081 (internal) |
+
+Never: run all microservices simultaneously without Docker Compose for infra — use the compose file.
+
+---
+
+## Naming conventions
+
+| Concept | Pattern | Example |
+|---|---|---|
+| Package | `com.example.<service>.<layer>` | `com.example.order.service` |
+| Domain event | `<Entity><PastTense>Event` | `OrderPlacedEvent` |
+| Command | `<Verb><Entity>Command` | `CreateOrderCommand` |
+| Query | `<Entity>Query` | `OrderByCustomerQuery` |
+| Service | `<Entity>Service` | `OrderService` |
+| Repository | `<Entity>Repository` | `OrderRepository` |
+| Controller | `<Entity>Controller` | `OrderController` |
+| DTO / response | `<Entity>Response` | `OrderResponse` |
+| Exception | `<Reason>Exception` | `OrderNotFoundException` |
+| Kafka topic constant | `<DOMAIN>_<ENTITY>_<EVENT>` | `ORDER_PAYMENT_COMPLETED` |
+| Config class | `<Subject>Config` | `JacksonConfig`, `SecurityConfig` |
+
+---
+
+## Caching strategy
+
+Use Redis cache-aside pattern. Do NOT use Spring `@Cacheable` — it hides TTL and
+serialization decisions and makes testing harder.
+
+Cache:
+- Read-heavy, rarely mutated data (product catalogue, config, user profile)
+- Expensive computed results with a clear invalidation trigger
+- Idempotency keys and correlation IDs (always)
+
+Do NOT cache:
+- Data that must be strongly consistent (account balances, inventory counts)
+- Data the service owns and can read directly from its own DB with acceptable latency
+- Anything with unclear invalidation logic
+
+Invalidation strategies (pick one per use case):
+- **TTL expiry**: for eventually-consistent reads — set TTL, let it expire
+- **Write-through**: on every write to DB, also update/delete the cache key
+- **Event-driven**: on Kafka event (e.g. `ProductUpdated`), delete the cache key
+
+@docs/context/caching.md
 
 ---
 
@@ -198,12 +235,7 @@ Rules:
 - Each migration is one logical change; index = separate migration from table creation
 - Always `IF NOT EXISTS` / `IF EXISTS` guards on DDL
 
-```sql
--- V4__add_customer_email_index.sql
-CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email
-  ON customers (email)
-  WHERE deleted_at IS NULL;
-```
+@docs/context/database-patterns.md
 
 ---
 
@@ -215,18 +247,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email
 - Cache-aside pattern: read cache → on miss read DB → write cache with TTL
 - Distributed lock: Redisson `RLock` for idempotency guards — never `SETNX` manually
 
-```java
-// Key convention
-private String key(UUID id) { return "order-service:order:" + id; }
-
-// Cache-aside
-return Optional.ofNullable(redis.opsForValue().get(key(id)))
-        .orElseGet(() -> {
-var order = repo.findById(id).orElseThrow(...);
-        redis.opsForValue().set(key(id), order, Duration.ofHours(24));
-        return order;
-    });
-```
+@docs/context/caching.md
 
 ---
 
@@ -240,7 +261,7 @@ var order = repo.findById(id).orElseThrow(...);
 - Use `@KafkaListener` with explicit `groupId`; never rely on default group ID
 - Idempotency: check `correlationId` in Redis before processing to prevent duplicate handling
 
-(See test/SKILL.md for full consumer + idempotency pattern.)
+@.claude/context/kafka-setup.md
 
 ### Avro / Schema Registry
 - All event schemas live in `common-events/src/main/avro/<domain>/` as `.avsc` files
@@ -252,19 +273,7 @@ var order = repo.findById(id).orElseThrow(...);
   - Never change a field from optional to required
 - Register schema before producing; CI runs `mvn schema-registry:register` on `common-events` build
 
-```json
-{
-  "type": "record",
-  "name": "PaymentCompletedEvent",
-  "namespace": "com.example.events.order",
-  "fields": [
-    {"name": "orderId",       "type": "string"},
-    {"name": "traceId",       "type": "string"},
-    {"name": "correlationId", "type": "string"},
-    {"name": "amount",        "type": "double", "default": 0.0}
-  ]
-}
-```
+@docs/context/avro-patterns.md
 
 ---
 
@@ -276,30 +285,16 @@ var order = repo.findById(id).orElseThrow(...);
 - Aggregation pipeline over app-side joins — never load a full collection to filter in Java
 - Never use `findAll()` without a filter on large collections — always paginate or stream
 
-```java
-@Document(collection = "products")
-@CompoundIndex(def = "{'category': 1, 'price': -1}", name = "idx_category_price")
-public class Product {
-  @Id String id;
-  @Indexed String sku;          // single-field index
-  @TextIndexed String description; // text search
-}
-```
+@docs/context/mongodb-patterns.md
 
 ---
 
 ## Database conventions
 
 ### Audit columns — every table must include
-```sql
-created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-deleted_at  TIMESTAMPTZ NULL
-```
-- Soft-delete: set `deleted_at = now()` — never `DELETE` business data
-- All queries filter `WHERE deleted_at IS NULL` unless explicitly querying deleted records
-- `updated_at` maintained via trigger or application layer on every `UPDATE`
-- Flyway migration: include audit columns in every `CREATE TABLE` migration
+`created_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `deleted_at TIMESTAMPTZ NULL`.
+Soft-delete: set `deleted_at = now()` — never `DELETE`. All queries filter `WHERE deleted_at IS NULL`.
+@docs/context/database-patterns.md
 
 ---
 
@@ -315,31 +310,8 @@ deleted_at  TIMESTAMPTZ NULL
 `should_<expectedBehavior>_when_<condition>`
 e.g. `should_throwOrderNotFoundException_when_orderIdDoesNotExist`
 
-### AbstractIntegrationTest — extend this, never redeclare containers
-```java
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@Testcontainers
-public abstract class AbstractIntegrationTest {
-  @Container static final PostgreSQLContainer<?> postgres =
-          new PostgreSQLContainer<>("postgres:16");
-  @Container static final MongoDBContainer mongo =
-          new MongoDBContainer("mongo:7");
-  @Container static final GenericContainer<?> redis =
-          new GenericContainer<>("redis:7").withExposedPorts(6379);
-  @Container static final KafkaContainer kafka =
-          new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7"));
-
-  @DynamicPropertySource
-  static void props(DynamicPropertyRegistry r) {
-    r.add("spring.datasource.url",            postgres::getJdbcUrl);
-    r.add("spring.data.mongodb.uri",          mongo::getReplicaSetUrl);
-    r.add("spring.data.redis.host",           redis::getHost);
-    r.add("spring.data.redis.port",           () -> redis.getMappedPort(6379));
-    r.add("spring.kafka.bootstrap-servers",   kafka::getBootstrapServers);
-  }
-}
-```
-Services that don't use MongoDB or Kafka still extend `AbstractIntegrationTest` — unused containers are cheap; inconsistent base classes are not.
+Extend `AbstractIntegrationTest` from `common-test` — never redeclare containers. All four containers (PG, Mongo, Redis, Kafka) started once per suite.
+@.claude/context/testcontainers-patterns.md
 
 ### Never
 - H2 or EmbeddedMongo in integration tests — always Testcontainers
@@ -368,23 +340,8 @@ Services that don't use MongoDB or Kafka still extend `AbstractIntegrationTest` 
 
 ## Docker
 
-```dockerfile
-FROM eclipse-temurin:25-jdk AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests -pl <service> -am
-
-FROM eclipse-temurin:25-jre
-RUN addgroup --system app && adduser --system --ingroup app app
-USER app
-WORKDIR /app
-COPY --from=build /app/<service>/target/<service>.jar app.jar
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-
-Note: replace `<service>` and `<service>.jar` with the actual module and artifact name — never use `*.jar` glob in multi-module builds.
+Multi-stage build: `eclipse-temurin:25-jdk` → `eclipse-temurin:25-jre`. Non-root user. Explicit artifact name (no `*.jar` glob). HEALTHCHECK mandatory.
+@docs/context/docker-patterns.md
 
 ---
 
@@ -402,25 +359,9 @@ Fix root causes. Never suppress errors. Never skip tests to pass a build.
 ---
 
 ## Project layout
-```
-/
-├── CLAUDE.md
-├── pom.xml                        ← BOM; all dependency versions declared here
-├── common-events/                 ← Avro schemas, shared event types
-├── common-test/                   ← AbstractIntegrationTest, shared fixtures
-├── api-gateway/
-├── order-service/
-├── payment-service/
-├── catalog-service/               ← MongoDB service
-├── notification-service/
-└── .claude/
-    ├── skills/
-    │   ├── write/SKILL.md
-    │   ├── review/SKILL.md
-    │   ├── commit/SKILL.md
-    │   └── test/SKILL.md
-    └── agents/
-```
+Monorepo: business services (PG) + catalog-service (Mongo) + api-gateway (WebFlux) + common-events/common-test.
+Each module may have its own `CLAUDE.md`. Claude config in `.claude/`; docs in `docs/`.
+@docs/context/project-layout.md
 
 ---
 
@@ -452,16 +393,86 @@ Fix root causes. Never suppress errors. Never skip tests to pass a build.
 - Avro field without `"default"` — breaks backward compatibility
 - Remove, rename, or change type of existing Avro field — add a new field instead
 - Produce Kafka messages before registering the schema in Schema Registry
+- POST/PUT/PATCH endpoints that mutate state without `Idempotency-Key` support
+- Outbound HTTP calls without `@CircuitBreaker` + `@Bulkhead` annotations
+
+---
+
+## Runbook
+
+Common incident commands:
+
+```bash
+# Find trace across services
+grep '"traceId":"<id>"' /var/log/<service>/app.log | jq .
+
+# Replay a DLT message
+kafka-console-consumer --topic order.payment.completed.DLT --from-beginning \
+  | kafka-console-producer --topic order.payment.completed
+
+# Flush a Redis key
+redis-cli DEL "order-service:order:<uuid>"
+
+# Flyway repair (after failed migration)
+./mvnw flyway:repair -pl <module>
+./mvnw flyway:migrate -pl <module>
+
+# Check Kafka consumer lag
+kafka-consumer-groups --describe --group notification-service-group \
+  --bootstrap-server localhost:9092
+
+# Check schema registry compatibility
+curl http://localhost:8081/compatibility/subjects/order.payment.completed-value/versions/latest \
+  -d @common-events/src/main/avro/order/PaymentCompletedEvent.avsc \
+  -H "Content-Type: application/json"
+```
+
+---
+
+## Context management
+
+### When to compact or clear
+- `/compact` — run proactively after completing a feature and before starting the next one; never wait for auto-compact
+- `/clear` — between unrelated tasks (e.g. "fix order retry bug" → "add catalog search"); carry-over context degrades reasoning
+- `/effort high` — architecture decisions, debugging race conditions, migration planning on live tables
+- `/effort low` — simple edits, renaming, adding a field, fixing a typo
+
+### After /compact
+Claude reads `.claude/session-checkpoint.md` (auto-written by `session-checkpoint.sh` hook) to resume thread without losing context.
+
+### Signs context quality is degrading
+- Claude re-asks questions already answered earlier in the session
+- Claude proposes decisions already rejected (check `docs/decisions.md`)
+- Claude generates code inconsistent with earlier choices
+→ Run `/compact` or `/clear` immediately.
+
+### Writing back to MEMORY.md
+After resolving any non-obvious issue — a workaround, an unexpected environment behaviour, a subtle JPA/Kafka/Redis interaction — append a one-liner to `MEMORY.md` under `## Solved problems`:
+`- [YYYY-MM] <module>: <what was wrong> → <what fixed it>`
 
 ---
 
 ## Agents
 
-| Command | Purpose |
-|---|---|
-| `/write $ARGUMENTS` | Explore → plan → implement → test → verify |
-| `/review` | Audit staged diff; output Critical / Warning / Suggestion |
-| `/commit` | Verify green → stage explicit paths → Conventional Commit → PR draft |
-| `/test $ARGUMENTS` | Write/fix tests; run suite; enforce coverage gate |
+**Slash commands** (invoke explicitly with `/`):
+
+| Command | Skill file | Purpose |
+|---|---|---|
+| `/write $ARGUMENTS` | `skills/write/` | Explore → plan → implement → verify |
+| `/review` | `skills/review/` | Audit diff; Critical / Warning / Suggestion |
+| `/commit` | `skills/commit/` | Gates → Conventional Commit → PR draft |
+| `/test $ARGUMENTS` | `skills/test/` | Write/fix tests; coverage gate |
+| `/migrate $DESCRIPTION` | `skills/migrate/` | Plan, write, validate Flyway migration |
+
+**Sub-agents** (auto-invoked by Claude from description; can also call explicitly):
+
+| Agent | File | Purpose |
+|---|---|---|
+| code-writer | `agents/code-writer.md` | Feature implementation |
+| code-reviewer | `agents/code-reviewer.md` | Code review |
+| git-agent | `agents/git-agent.md` | Commit + PR |
+| test-agent | `agents/test-agent.md` | Test writing + coverage |
+| scaffold-agent | `agents/scaffold-agent.md` | New service bootstrap |
+| debug-agent | `agents/debug-agent.md` | Incident investigation (read-only) |
 
 Skills live in `.claude/skills/<name>/SKILL.md`. See each file for full instructions.
