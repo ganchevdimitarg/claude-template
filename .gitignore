@@ -19,3 +19,6 @@ target/
 .env.*
 *.pem
 *.key
+
+# Windows / Git Bash crash dumps
+sh.exe.stackdump
