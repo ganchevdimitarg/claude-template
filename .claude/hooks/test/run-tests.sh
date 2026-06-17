@@ -51,6 +51,12 @@ assert_exit "protect-secrets blocks .env"  2 protect-secrets.sh '{"file_path":"<
 assert_exit "protect-secrets blocks .pem"  2 protect-secrets.sh '{"file_path":"certs/server.pem"}'
 assert_exit "protect-secrets allows .java" 0 protect-secrets.sh '{"file_path":"src/Main.java"}'
 
+# --- path / advisory hooks ---
+assert_exit "protect-migrations allows new (untracked)" 0 protect-migrations.sh '{"file_path":"src/main/resources/db/migration/V99__new.sql"}'
+assert_exit "warn-generated blocks generated-sources"   2 warn-generated-files.sh '{"file_path":"target/generated-sources/Foo.java"}'
+assert_exit "warn-generated allows normal java"         0 warn-generated-files.sh '{"file_path":"src/main/java/Foo.java"}'
+assert_exit "audit-log always allows"                   0 audit-log.sh '{"command":"ls"}'
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
