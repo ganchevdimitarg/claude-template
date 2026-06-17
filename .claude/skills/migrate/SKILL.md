@@ -27,11 +27,11 @@ allowed-tools: Read, Write, Bash, Grep, Glob
    - New index: always in a separate migration; use `CREATE INDEX CONCURRENTLY IF NOT EXISTS`
    - Guards: always `IF NOT EXISTS` / `IF EXISTS` on every DDL statement
 
-5. **Validate**: `./mvnw flyway:validate -pl <module>`
+5. **Validate**: `./mvnw flyway:validate`
 
-6. **Migrate**: `./mvnw flyway:migrate -pl <module>` — confirm `Success` in `flyway:info`
+6. **Migrate**: `./mvnw flyway:migrate` — confirm `Success` in `flyway:info`
 
-7. **Full verify**: `./mvnw clean verify -pl <module> -am`
+7. **Full verify**: `./mvnw clean verify`
    Hibernate `validate` confirms schema matches entity mappings.
 
 8. **Backfill** (if needed): write `V<n+1>__backfill_<desc>.sql` separately.

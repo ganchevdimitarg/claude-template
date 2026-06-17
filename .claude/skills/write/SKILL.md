@@ -15,7 +15,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 6. Write unit tests (JUnit 5 + AssertJ, real domain objects, no Mockito on domain logic).
 7. Write integration tests extending AbstractIntegrationTest (Testcontainers — never H2).
 8. Add observability: MDC traceId/userId at entry point, structured log on key operations, MeterRegistry counter for significant actions.
-9. Run: `./mvnw clean verify -pl <module> -am`
+9. Run: `./mvnw clean verify` (single-module repo; for a future monorepo add `-pl <module> -am`)
 10. If verify fails:
     - Attempt to fix the root cause.
     - If the failure is a Flyway version conflict, migration checksum error, or unresolvable compilation error:

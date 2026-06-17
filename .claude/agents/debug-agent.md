@@ -61,8 +61,8 @@ kafka-console-consumer --topic <topic>.DLT --from-beginning --max-messages 10 \
 
 ### Flyway failures
 ```bash
-./mvnw flyway:info -pl <module>        # show migration history and pending
-./mvnw flyway:validate -pl <module>    # show checksum mismatches
+./mvnw flyway:info        # show migration history and pending
+./mvnw flyway:validate    # show checksum mismatches
 # Check schema history table directly
 # SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 10;
 ```
@@ -87,9 +87,9 @@ curl -s http://${SCHEMA_REGISTRY_HOST:-localhost:8081}/subjects/<topic>-value/ve
 
 ### Failing integration test
 ```bash
-./mvnw test -pl <module> -Dtest=<TestClass> -e 2>&1 | tail -80
+./mvnw test -Dtest=<TestClass> -e 2>&1 | tail -80
 # Check Testcontainers startup
-./mvnw test -pl <module> -Dtest=<TestClass> -e -Dlogging.level.tc=DEBUG 2>&1 | grep -E "container|port|error"
+./mvnw test -Dtest=<TestClass> -e -Dlogging.level.tc=DEBUG 2>&1 | grep -E "container|port|error"
 ```
 
 ### Circuit breaker open

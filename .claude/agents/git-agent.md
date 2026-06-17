@@ -35,9 +35,9 @@ git diff --name-only | sed 's|/.*||' | sort -u
 ```
 ```
 0. Branch check     → never commit to main/develop; create feature branch if needed
-1. Build + test     → ./mvnw clean verify -pl <module> -am
+1. Build + test     → ./mvnw clean verify
 2. Checkstyle       → ./mvnw checkstyle:check
-3. Flyway validate  → ./mvnw flyway:validate -pl <module>
+3. Flyway validate  → ./mvnw flyway:validate
 ```
 
 **Commit message format (Conventional Commits):**

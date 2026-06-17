@@ -37,7 +37,7 @@ Key invariants you must never violate:
   `.avsc` in `common-events/` and register the schema before writing producer code.
 - **Audit columns**: every new `CREATE TABLE` migration must include
   `created_at`, `updated_at`, `deleted_at`.
-- **Verify gate**: run `./mvnw clean verify -pl <module> -am` after implementation.
+- **Verify gate**: run `./mvnw clean verify` after implementation (single-module repo; for a future monorepo add `-pl <module> -am`).
   If it fails, fix the root cause. If unresolvable, run `git restore src/` and report
   exactly what blocked. Do not suppress errors. Do not stop until the build is green.
 - **Observability**: every new HTTP handler needs MDC setup (`traceId`, `userId`);
