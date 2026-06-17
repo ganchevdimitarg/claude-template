@@ -25,8 +25,8 @@ complete, and maintainable tests that follow every convention in CLAUDE.md and
 - "the payment integration test is failing — fix it"
 - "add a Kafka consumer test for PaymentCompletedEvent"
 - "add WireMock stubs for the inventory client"
-- "we're at 62% coverage on order-service — bring it to 80%"
-- "write the producer contract test for catalog-service"
+- "we're at 62% coverage on <service-name> — bring it to 80%"
+- "write the producer contract test for <service-name>"
 
 ## Behaviour
 

@@ -22,7 +22,7 @@ features correctly, completely, and in compliance with every convention in CLAUD
 ## Trigger examples
 - "implement the order cancellation endpoint"
 - "add a Kafka consumer for PaymentCompletedEvent"
-- "create the catalog-service product search feature"
+- "create the <service-name> product search feature"
 - "add a Flyway migration to add the discount_code column"
 
 ## Behaviour

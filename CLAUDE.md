@@ -4,7 +4,7 @@
 - Java 25 · virtual threads default · ScopedValue over ThreadLocal · SequencedCollection APIs · records preferred over classes for data carriers
 - Spring Boot 4 · WebMVC for business services · WebFlux for api-gateway · no XML config · problem+json errors (RFC 9457)
 - PostgreSQL · Flyway migrations · JSONB only for schemaless data · typed columns preferred
-- MongoDB · catalog-service only · aggregation pipeline over app-side joins
+- MongoDB · <service-name> only · aggregation pipeline over app-side joins
 - Redis · Lettuce · JSON serialization (Jackson) · keyspace: `<service>:<entity>:<id>` · TTL always set
 - Kafka · Schema Registry (Avro) · topic: `<domain>.<entity>.<event>` · consumer group: `<service>-group` · DLT: `<topic>.DLT`
 - Docker · multi-stage builds · non-root user · HEALTHCHECK mandatory · explicit artifact name in COPY
@@ -145,7 +145,7 @@ Gate new behaviour behind feature flags before full rollout:
 - Simple on/off: `@ConditionalOnProperty(name = "features.new-pricing", havingValue = "true")`
 - Runtime toggles: inject `FeatureFlagService` backed by Unleash or a Redis key
 - Flags removed within one sprint of confirmed full rollout — never left permanently
-- Flag names: `features.<service>.<feature>` e.g. `features.order-service.retry-v2`
+- Flag names: `features.<service>.<feature>` e.g. `features.<service-name>.retry-v2`
 - Never gate with a hardcoded `if (ENV == "prod")` — use the flag service
 
 ---
@@ -155,7 +155,7 @@ Gate new behaviour behind feature flags before full rollout:
 Infrastructure via Docker Compose at repo root:
 ```bash
 docker compose up -d          # starts PG, Mongo, Redis, Kafka, Schema Registry
-./mvnw spring-boot:run -pl order-service   # run a single service
+./mvnw spring-boot:run -pl <service-name>   # run a single service
 ```
 
 Port conventions (declared in root `docker-compose.yml`):
@@ -167,7 +167,7 @@ Port conventions (declared in root `docker-compose.yml`):
 | Kafka | 9092 |
 | Schema Registry | 8081 |
 | api-gateway | 8080 |
-| order-service | 8081 (internal) |
+| <service-name> | 8081 (internal) |
 
 Never: run all microservices simultaneously without Docker Compose for infra — use the compose file.
 
@@ -244,7 +244,7 @@ Rules:
 ## Redis
 
 - Serialization: Jackson JSON (`GenericJackson2JsonRedisSerializer`) — never Java serialization
-- Key pattern: `<service>:<entity>:<id>` e.g. `order-service:order:uuid`
+- Key pattern: `<service>:<entity>:<id>` e.g. `<service-name>:order:uuid`
 - TTL: always set — no immortal keys; default 24h unless business rule differs
 - Cache-aside pattern: read cache → on miss read DB → write cache with TTL
 - Distributed lock: Redisson `RLock` for idempotency guards — never `SETNX` manually
@@ -256,7 +256,7 @@ Rules:
 ## Kafka
 
 - Topic naming: `<domain>.<entity>.<event>` e.g. `order.payment.completed`
-- Consumer group: `<service>-group` e.g. `notification-service-group`
+- Consumer group: `<service>-group` e.g. `<service-name>-group`
 - Dead-letter topic: `<original-topic>.DLT` — configure via `@RetryableTopic`
 - Retry: 3 attempts with exponential backoff before DLT; log and alert on DLT arrival
 - All messages carry `traceId` and `correlationId` as headers
@@ -279,7 +279,7 @@ Rules:
 
 ---
 
-## MongoDB conventions (catalog-service)
+## MongoDB conventions (<service-name>)
 - Declare indexes via `@CompoundIndex` on the document class or via Mongock migration scripts — never rely on auto-index creation in prod
 - Always index every field used in `find()` / `$match` filters
 - Compound index field order: equality fields first, range/sort fields last
@@ -361,7 +361,7 @@ Fix root causes. Never suppress errors. Never skip tests to pass a build.
 ---
 
 ## Project layout
-Monorepo: business services (PG) + catalog-service (Mongo) + api-gateway (WebFlux) + common-events/common-test.
+Monorepo: business services (PG) + <service-name> (Mongo) + api-gateway (WebFlux) + common-events/common-test.
 Each module may have its own `CLAUDE.md`. Claude config in `.claude/`; docs in `docs/`.
 @docs/context/project-layout.md
 
@@ -413,14 +413,14 @@ kafka-console-consumer --topic order.payment.completed.DLT --from-beginning \
   | kafka-console-producer --topic order.payment.completed
 
 # Flush a Redis key
-redis-cli DEL "order-service:order:<uuid>"
+redis-cli DEL "<service-name>:order:<uuid>"
 
 # Flyway repair (after failed migration)
 ./mvnw flyway:repair -pl <module>
 ./mvnw flyway:migrate -pl <module>
 
 # Check Kafka consumer lag
-kafka-consumer-groups --describe --group notification-service-group \
+kafka-consumer-groups --describe --group <service-name>-group \
   --bootstrap-server localhost:9092
 
 # Check schema registry compatibility

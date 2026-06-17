@@ -54,7 +54,7 @@ public class MdcRequestFilter extends OncePerRequestFilter {
         try {
             MDC.put("traceId", req.getHeader("traceparent"));
             MDC.put("userId", req.getHeader("X-User-Id"));
-            MDC.put("serviceId", "order-service");
+            MDC.put("serviceId", "<service-name>");
             chain.doFilter(req, res);
         } finally {
             MDC.clear();

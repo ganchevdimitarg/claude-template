@@ -224,7 +224,7 @@ assert_exit "allow rm single file"    0 block-dangerous.sh '{"command":"rm targe
 
 assert_exit "secret-scan ignores non-commit" 0 secret-scan.sh '{"command":"ls"}'
 
-assert_exit "protect-secrets blocks .env"  2 protect-secrets.sh '{"file_path":"order-service/.env"}'
+assert_exit "protect-secrets blocks .env"  2 protect-secrets.sh '{"file_path":"<service-name>/.env"}'
 assert_exit "protect-secrets blocks .pem"  2 protect-secrets.sh '{"file_path":"certs/server.pem"}'
 assert_exit "protect-secrets allows .java" 0 protect-secrets.sh '{"file_path":"src/Main.java"}'
 ```

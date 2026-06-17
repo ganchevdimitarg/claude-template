@@ -24,11 +24,11 @@ throughput, and capacity issues and produce a clear bottleneck report. You never
 source code, never commit, and never run destructive commands.
 
 ## Trigger examples
-- "order-service p99 latency is 4s — investigate"
-- "Kafka consumer lag on notification-service-group keeps growing"
+- "<service-name> p99 latency is 4s — investigate"
+- "Kafka consumer lag on <service-name>-group keeps growing"
 - "inventory circuit breaker keeps opening under load"
 - "Redis hit rate is low — why?"
-- "catalog-service search is slow under concurrent requests"
+- "<service-name> search is slow under concurrent requests"
 
 ## Ambiguity
 

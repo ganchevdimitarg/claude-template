@@ -20,7 +20,7 @@ and produce a structured, severity-ranked report.
 
 ## Trigger examples
 - "review my staged changes"
-- "review the last commit on order-service"
+- "review the last commit on <service-name>"
 - "review this PR diff"
 - "check OrderService.java against our conventions"
 

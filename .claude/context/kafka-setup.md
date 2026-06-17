@@ -50,7 +50,7 @@ public class OrderEventPublisher {
 ## Consumer pattern with idempotency + retry
 ```java
 @RetryableTopic(attempts = "3", backoff = @Backoff(delay = 1000, multiplier = 2))
-@KafkaListener(topics = "order.payment.completed", groupId = "notification-service-group")
+@KafkaListener(topics = "order.payment.completed", groupId = "<service-name>-group")
 public void onPaymentCompleted(PaymentCompletedEvent event,
         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
     MDC.put("traceId",       event.getTraceId().toString());

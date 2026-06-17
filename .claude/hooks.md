@@ -47,7 +47,7 @@ without burning tool calls to discover branch, module layout, or recent commits.
 - Last 8 commits
 - Uncommitted / untracked file counts
 - Active Maven modules
-- Issue number extracted from branch name (e.g. `feat/order-service-142-retry` → `Refs #142`)
+- Issue number extracted from branch name (e.g. `feat/<service-name>-142-retry` → `Refs #142`)
 
 **Config:**
 ```json
@@ -124,7 +124,7 @@ Runs async — zero latency impact on the agent loop.
 **Log format:** `timestamp | session_id | branch | command`
 
 ```
-2025-06-14T10:23:01Z  sess_abc123  feat/order-retry  ./mvnw clean verify -pl order-service -am
+2025-06-14T10:23:01Z  sess_abc123  feat/order-retry  ./mvnw clean verify -pl <service-name> -am
 2025-06-14T10:23:45Z  sess_abc123  feat/order-retry  git diff --staged
 ```
 
@@ -154,7 +154,7 @@ Skips if module cannot be determined.
 
 **Feedback to Claude:**
 ```
-Checkstyle violations found after editing order-service/src/.../OrderService.java:
+Checkstyle violations found after editing <service-name>/src/.../OrderService.java:
 [WARN] Line 42: 'if' construct must use '{}'s. [NeedBraces]
 Fix these before proceeding.
 ```
@@ -169,7 +169,7 @@ before they reach CI.
 
 **Feedback to Claude:**
 ```
-Flyway validation failed after writing order-service/src/main/resources/db/migration/V5__add_index.sql:
+Flyway validation failed after writing <service-name>/src/main/resources/db/migration/V5__add_index.sql:
 Validate failed: Migration checksum mismatch for migration version 5
 Check migration version, filename format (V<n>__<desc>.sql), and checksum.
 ```
@@ -228,8 +228,8 @@ Silent no-op for turns that only read files or run tests.
 
 **Feedback to Claude:**
 ```
-Build is RED in: order-service. Fix all failures before stopping.
-Run './mvnw clean verify -pl order-service -am' and address root causes —
+Build is RED in: <service-name>. Fix all failures before stopping.
+Run './mvnw clean verify -pl <service-name> -am' and address root causes —
 do not suppress errors.
 ```
 

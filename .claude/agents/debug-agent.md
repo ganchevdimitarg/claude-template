@@ -25,12 +25,12 @@ produce a clear root-cause report. You never modify source code, never commit, a
 never run destructive commands.
 
 ## Trigger examples
-- "order-service is returning 500s — investigate"
+- "<service-name> is returning 500s — investigate"
 - "the payment integration test is failing — why?"
-- "notification-service Kafka consumer is lagging"
+- "<service-name> Kafka consumer is lagging"
 - "traceId abc-123 is not appearing in logs"
 - "Flyway migration failed on staging"
-- "Redis key order-service:order:uuid is missing"
+- "Redis key <service-name>:order:uuid is missing"
 
 ## Ambiguity
 If the symptom is vague, ask one question: "Which service, environment, and error message
@@ -45,7 +45,7 @@ grep '"level":"ERROR"' /var/log/<service>/app.log | tail -50 | jq .
 # Correlate by traceId
 grep '"traceId":"<id>"' /var/log/<service>/app.log | jq '{time:.timestamp,msg:.message,ex:.exception}'
 # Check across services
-for svc in order-service payment-service notification-service; do
+for svc in <service-name> <other-service>; do
   grep '"traceId":"<id>"' /var/log/$svc/app.log | jq .
 done
 ```
@@ -69,10 +69,10 @@ kafka-console-consumer --topic <topic>.DLT --from-beginning --max-messages 10 \
 
 ### Redis inspection
 ```bash
-redis-cli KEYS "order-service:order:*" | head -20
-redis-cli GET "order-service:order:<uuid>"
-redis-cli TTL "order-service:order:<uuid>"           # -1 = no TTL (bug!)
-redis-cli KEYS "idempotency:order-service:*" | wc -l
+redis-cli KEYS "<service-name>:order:*" | head -20
+redis-cli GET "<service-name>:order:<uuid>"
+redis-cli TTL "<service-name>:order:<uuid>"           # -1 = no TTL (bug!)
+redis-cli KEYS "idempotency:<service-name>:*" | wc -l
 ```
 
 ### Schema Registry issues
