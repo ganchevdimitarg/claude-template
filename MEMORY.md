@@ -16,7 +16,10 @@
 <!-- Claude appends here when resolving non-obvious issues -->
 
 ## Active work
-<!-- Claude notes current task/branch context here -->
+- Branch: `main`
+- .claude/settings.json
+- .gitignore
+- MEMORY.md
 
 ## Team preferences
 - Commit messages: Conventional Commits — feat/fix/chore/migration(scope): description
