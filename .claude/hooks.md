@@ -10,6 +10,44 @@ Hooks use the following exit code contract:
 
 ---
 
+## Shared library: `_lib.sh`
+
+Every hook sources `.claude/hooks/_lib.sh` instead of hand-rolling JSON parsing.
+This removes the hard dependency on `python3` (Windows + Git Bash ships only `python`):
+
+- `json_field <name>` / `json_field_multiline <name>` — extract a tool-input field
+  (python-first for correctness, `sed` fallback when no interpreter is present).
+- `guard_field <name>` — **fail-closed** extraction for guard hooks: if the key is
+  present in the raw input but parsing yields empty, the hook blocks (`exit 2`)
+  rather than silently allowing the action.
+- `guard_block <message>` — print to stderr and `exit 2`.
+- `emit_context <message>` — print `{"additionalContext": "..."}` to stdout (no block).
+- `resolve_module <file>` — returns `.` for the single-module root pom, a nested
+  module dir for a monorepo, or empty when no pom exists. Maven hooks omit `-pl`
+  when the module is `.`.
+
+### Fail-closed vs fail-open
+- **Guard hooks** (`block-dangerous`, `block-main-commit`, `secret-scan`,
+  `protect-secrets`, `protect-migrations`, `warn-generated-files`): block on
+  unparseable input — a missing interpreter must never silently disable a guard.
+- **Advisory hooks** (Checkstyle, Flyway, Avro, N+1, API-contract, audit-log):
+  no-op (`exit 0`) when they cannot run.
+
+## Testing hooks
+
+`.claude/hooks/test/run-tests.sh` pipes JSON fixtures into each hook and asserts
+exit codes (and `additionalContext` presence). Run it after changing any hook;
+add a fixture for every new rule:
+
+```bash
+.claude/hooks/test/run-tests.sh   # PASS=<n> FAIL=0, exit 0
+```
+
+> Single-module repos run Maven without `-pl`; `resolve_module` handles the
+> monorepo case automatically. New hooks must source `_lib.sh` and add a fixture.
+
+---
+
 ## Hook lifecycle
 
 ```
@@ -17,21 +55,28 @@ SessionStart
     └─ inject-git-context.sh       ← orient Claude with branch/commit/module state
 
 PreToolUse  (before every tool call)
-    ├─ block-dangerous.sh          ← Bash: block rm -rf, force-push, DELETE without WHERE
-    ├─ block-main-commit.sh        ← Bash: block git commit on main/develop
-    ├─ protect-secrets.sh          ← Read|Write|Edit|Bash: block access to secrets files
-    ├─ protect-migrations.sh       ← Write|Edit: block editing committed Flyway migrations
+    ├─ secret-scan.sh              ← Bash(git commit): scan staged content for secrets [guard]
+    ├─ block-dangerous.sh          ← Bash: block rm -rf, force-push, DROP/TRUNCATE, DELETE w/o WHERE [guard]
+    ├─ block-main-commit.sh        ← Bash: block git commit on main/develop [guard]
+    ├─ protect-secrets.sh          ← Read|Write|Edit|Bash: block access to secrets files [guard]
+    ├─ protect-migrations.sh       ← Write|Edit: block editing committed Flyway migrations [guard]
+    ├─ warn-generated-files.sh     ← Write|Edit: block overwriting generated files (target/, @Generated) [guard]
+    ├─ dependency-check.sh         ← Write|Edit pom.xml: block inline <version> outside the root BOM
     └─ audit-log.sh (async)        ← Bash: append every command to .claude/audit.log
 
-PostToolUse (after every tool call)
+PostToolUse (after every tool call)              [all advisory — fail open]
     ├─ checkstyle-on-save.sh       ← Write|Edit .java: run Checkstyle; feed violations back
     ├─ flyway-validate.sh          ← Write .sql: run flyway:validate; feed errors back
-    ├─ avro-validate.sh            ← Write|Edit .avsc: validate schema JSON + defaults
-    └─ warn-generated-files.sh     ← Write|Edit: warn if file is generated (target/, @Generated)
+    ├─ avro-validate.sh            ← Write|Edit .avsc: validate schema JSON + defaults; regenerate
+    ├─ n-plus-one-check.sh         ← Write|Edit .java: warn on JPA N+1 patterns
+    └─ api-contract-check.sh       ← Write|Edit .java: warn on non /api/v{n}/ endpoints
 
 Stop        (before Claude finishes a turn)
-    └─ verify-gate.sh              ← run ./mvnw clean verify; force Claude to fix if red
+    ├─ verify-gate.sh              ← run ./mvnw verify on changed modules; exit 2 forces a fix if red
+    └─ session-checkpoint.sh       ← write .claude/session-checkpoint.md + sync MEMORY.md
 ```
+
+All hooks source `_lib.sh`; `[guard]` hooks fail closed, advisory hooks fail open.
 
 ---
 
@@ -124,8 +169,8 @@ Runs async — zero latency impact on the agent loop.
 **Log format:** `timestamp | session_id | branch | command`
 
 ```
-2025-06-14T10:23:01Z  sess_abc123  feat/order-retry  ./mvnw clean verify -pl <service-name> -am
-2025-06-14T10:23:45Z  sess_abc123  feat/order-retry  git diff --staged
+2025-06-14T10:23:01Z  sess_abc123  feat/retry-v2  ./mvnw clean verify
+2025-06-14T10:23:45Z  sess_abc123  feat/retry-v2  git diff --staged
 ```
 
 **Note:** `.claude/audit.log` is gitignored by default. Add these lines to your `.gitignore`:
@@ -154,7 +199,7 @@ Skips if module cannot be determined.
 
 **Feedback to Claude:**
 ```
-Checkstyle violations found after editing <service-name>/src/.../OrderService.java:
+Checkstyle violations found after editing src/main/java/.../OrderService.java:
 [WARN] Line 42: 'if' construct must use '{}'s. [NeedBraces]
 Fix these before proceeding.
 ```
@@ -169,7 +214,7 @@ before they reach CI.
 
 **Feedback to Claude:**
 ```
-Flyway validation failed after writing <service-name>/src/main/resources/db/migration/V5__add_index.sql:
+Flyway validation failed after writing src/main/resources/db/migration/V5__add_index.sql:
 Validate failed: Migration checksum mismatch for migration version 5
 Check migration version, filename format (V<n>__<desc>.sql), and checksum.
 ```
@@ -186,7 +231,7 @@ Check migration version, filename format (V<n>__<desc>.sql), and checksum.
 3. `name` is present
 4. `namespace` is present (required for Schema Registry subject naming)
 5. All fields have a `"default"` value (backward compatibility requirement)
-6. `./mvnw generate-sources -pl common-events` succeeds (Java class generation)
+6. `./mvnw generate-sources` succeeds (Java class generation; `resolve_module` adds `-pl` only in a monorepo)
 
 **Feedback example:**
 ```
@@ -224,12 +269,12 @@ Claude to continue and fix rather than stopping with a broken repo.
 **Trigger condition:** Only fires if `.java` or `.sql` files appear in `git diff HEAD`.
 Silent no-op for turns that only read files or run tests.
 
-**Module detection:** `git diff --name-only HEAD | sed 's|/.*||' | sort -u`
+**Module detection:** `resolve_module` per changed file (`.` = single-module root → no `-pl`).
 
 **Feedback to Claude:**
 ```
-Build is RED in: <service-name>. Fix all failures before stopping.
-Run './mvnw clean verify -pl <service-name> -am' and address root causes —
+Build is RED in: <module>. Fix all failures before stopping.
+Run './mvnw verify' and address root causes —
 do not suppress errors.
 ```
 
