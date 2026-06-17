@@ -17,9 +17,7 @@
 
 ## Active work
 - Branch: `main`
-- .claude/settings.json
-- .gitignore
-- MEMORY.md
+- No uncommitted files
 
 ## Team preferences
 - Commit messages: Conventional Commits — feat/fix/chore/migration(scope): description
