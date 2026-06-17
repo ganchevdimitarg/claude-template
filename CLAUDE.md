@@ -59,6 +59,8 @@
 - Each service declares a `SecurityFilterChain` bean — never rely on Spring Boot auto-config defaults
 - Method security (`@PreAuthorize`) on service layer, not controller
 
+@docs/context/security.md
+
 ### Jackson
 - Global config in `JacksonConfig` `@Configuration` bean — never per-controller `ObjectMapper`
 - Property naming: `camelCase` for REST (default); never mix strategies across services
