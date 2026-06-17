@@ -35,6 +35,22 @@ assert_lib "json_field file_path"        "src/Main.java"         lib_json '{"fil
 assert_lib "json_field windows path"     'D:\IdeaProjects\x.java' lib_json '{"file_path":"D:\\IdeaProjects\\x.java"}' file_path
 assert_lib "json_field absent -> empty"  ""                      lib_json '{"command":"x"}' file_path
 
+# --- guard hooks (must fail CLOSED / block) ---
+assert_exit "block rm -rf"            2 block-dangerous.sh '{"command":"rm -rf /tmp/x"}'
+assert_exit "block rm -fr"            2 block-dangerous.sh '{"command":"rm -fr build"}'
+assert_exit "block git add -A"        2 block-dangerous.sh '{"command":"git add -A"}'
+assert_exit "block DROP TABLE"        2 block-dangerous.sh '{"command":"psql -c \"DROP TABLE orders\""}'
+assert_exit "block DELETE no where"   2 block-dangerous.sh '{"command":"psql -c \"DELETE FROM orders;\""}'
+assert_exit "block DELETE quoted tbl" 2 block-dangerous.sh '{"command":"psql -c \"DELETE FROM \\\"orders\\\"\""}'
+assert_exit "allow safe ls"           0 block-dangerous.sh '{"command":"ls -la"}'
+assert_exit "allow rm single file"    0 block-dangerous.sh '{"command":"rm target/app.jar"}'
+
+assert_exit "secret-scan ignores non-commit" 0 secret-scan.sh '{"command":"ls"}'
+
+assert_exit "protect-secrets blocks .env"  2 protect-secrets.sh '{"file_path":"<service-name>/.env"}'
+assert_exit "protect-secrets blocks .pem"  2 protect-secrets.sh '{"file_path":"certs/server.pem"}'
+assert_exit "protect-secrets allows .java" 0 protect-secrets.sh '{"file_path":"src/Main.java"}'
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = 0 ]
