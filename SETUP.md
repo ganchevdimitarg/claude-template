@@ -1,5 +1,11 @@
 # Claude Code setup — where everything goes
 
+## Prerequisites
+
+**Windows users**: hooks are bash scripts and require **Git Bash** in `PATH`.
+Install [Git for Windows](https://git-scm.com/download/win) and ensure `bash.exe` is available before running Claude Code.
+Verify with: `bash --version`
+
 After cloning, run once:
 ```bash
 chmod +x .claude/hooks/*.sh
@@ -47,3 +53,20 @@ export SCHEMA_REGISTRY_MCP_URL=<url>
 export JIRA_MCP_URL=<url>
 export JIRA_TOKEN=<token>
 ```
+
+## context7 — live library docs
+
+No environment variable or token required. Activates automatically from `.claude/mcp.json` on session start.
+
+Manual activation:
+```bash
+claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
+```
+
+## Verify your setup
+
+After cloning and configuring, confirm these three things work:
+
+1. **Start Claude Code** → confirm `inject-git-context.sh` fires (branch name appears in session context)
+2. **Edit any `.java` file** → confirm checkstyle hook output appears in the turn
+3. **Run `/review`** → confirm the review skill loads and outputs the checklist header
