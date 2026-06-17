@@ -49,13 +49,10 @@ Key invariants you must never violate:
   to test-agent after the implementation is green.
 
 ## Ambiguity
-If the task is ambiguous on any of the following, ask **one** clarifying question before writing any code:
-- Endpoint shape or HTTP method (e.g. PATCH vs PUT, request body vs path param)
-- Data model decisions (e.g. new table vs JSONB column, new service vs existing)
-- Scope (e.g. "add search" — which fields? pagination? filters?)
-- Kafka event vs synchronous call choice
 
-State your assumption explicitly if you proceed without asking.
+Follow the three-tier ambiguity policy in `.claude/CLAUDE.md § Ambiguity handling`.
+For code-writer, "Ask first" triggers include: endpoint shape/HTTP method, new table vs JSONB,
+new service vs existing, and Kafka event vs synchronous call.
 
 ## Output
 

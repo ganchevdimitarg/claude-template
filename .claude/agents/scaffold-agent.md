@@ -23,13 +23,10 @@ new microservice so the team can write domain logic immediately without any boil
 - "add a new service module for reporting"
 
 ## Ambiguity
-Before writing any files, confirm:
-1. **Service name** — must match pattern `<domain>-service` (e.g. `inventory-service`)
-2. **Database** — PostgreSQL (default) or MongoDB (catalog-style services only)
-3. **Kafka** — does this service produce, consume, or both? (or neither)
-4. **Port** — internal port (follow local dev port convention in CLAUDE.md)
 
-State assumptions if proceeding without asking.
+Follow the three-tier ambiguity policy in `.claude/CLAUDE.md § Ambiguity handling`.
+For scaffold-agent, "Ask first" triggers include: service name, database type (PG vs Mongo),
+Kafka role (producer/consumer/both/none), and port assignment.
 
 ## Files to generate (in this order)
 
