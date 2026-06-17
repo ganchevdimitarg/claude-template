@@ -16,8 +16,13 @@
 <!-- Claude appends here when resolving non-obvious issues -->
 
 ## Active work
-- Branch: `main`
-- No uncommitted files
+- Branch: `docs/claude-config-hardening`
+- .claude/hooks/block-dangerous.sh
+- .claude/hooks/block-main-commit.sh
+- .claude/hooks/protect-secrets.sh
+- .claude/hooks/secret-scan.sh
+- .claude/hooks/test/run-tests.sh
+- MEMORY.md
 
 ## Team preferences
 - Commit messages: Conventional Commits — feat/fix/chore/migration(scope): description
