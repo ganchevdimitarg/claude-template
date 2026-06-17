@@ -4,6 +4,7 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
+guard_require file_path
 FILE="$(json_field file_path)"
 echo "$FILE" | grep -qE 'db/migration/V[0-9]+__.*\.sql$' || exit 0
 

@@ -12,11 +12,11 @@ allowed-tools: Bash(git *), Bash(./mvnw *), Bash(gh *)
      e.g. `git checkout -b feat/<service-name>-idempotent-retry`
    - Never commit directly to `main` or `develop`.
 
-1. Run: `./mvnw clean verify -pl <affected-module> -am`
+1. Run: `./mvnw clean verify` (single-module repo; for a future monorepo add `-pl <module> -am`)
    If fails: stop, report failures. Do not proceed.
 2. Run: `./mvnw checkstyle:check`
    If fails: stop, report. Do not proceed.
-3. Run: `./mvnw flyway:validate -pl <affected-module>`
+3. Run: `./mvnw flyway:validate`
    If fails: stop, report. Do not proceed.
 4. Review changed files: `git diff --name-only`
    Stage explicit paths only — never `git add -A`.

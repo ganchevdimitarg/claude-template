@@ -3,6 +3,7 @@
 INPUT=$(cat)
 . "$(dirname "$0")/_lib.sh"
 
+guard_require file_path
 FILE="$(json_field file_path)"
 [ -z "$FILE" ] && exit 0
 
