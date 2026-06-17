@@ -51,7 +51,7 @@ else:
 # Replace content between ## Active work and the next ## header (or EOF)
 pattern = r'## Active work\n.*?(?=\n## |\Z)'
 if re.search(pattern, content, re.DOTALL):
-    content = re.sub(pattern, new_section.rstrip(), content, count=1, flags=re.DOTALL)
+    content = re.sub(pattern, new_section.rstrip() + '\n', content, count=1, flags=re.DOTALL)
 else:
     content = content.rstrip() + '\n\n' + new_section
 
