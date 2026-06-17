@@ -23,26 +23,25 @@ MODULES=$(find "$REPO_ROOT" -maxdepth 2 -name pom.xml 2>/dev/null \
 ISSUE=$(echo "$BRANCH" | grep -oE '[0-9]{2,}' | head -1)
 ISSUE_REF=${ISSUE:+"Refs #$ISSUE"}
 
-python3 - << PYEOF
-import json
+. "$(dirname "$0")/_lib.sh"
 
-context = f"""## Session context (auto-injected)
+CONTEXT="## Session context (auto-injected)
 - **Branch**: $BRANCH
 - **Last tag**: $LAST_TAG
 - **Uncommitted files**: $UNCOMMITTED  |  **Untracked**: $UNTRACKED
-- **Active modules**: $MODULES
+- **Active modules**: ${MODULES:-(single-module: root pom)}
 - **Issue**: ${ISSUE_REF:-none detected}
 
 ### Recent commits
 \`\`\`
 $RECENT
 \`\`\`
-"""
+"
 
-print(json.dumps({
-    "sessionTitle": "$BRANCH",
-    "additionalContext": context
-}))
-PYEOF
+if [ -n "$_PY" ]; then
+  TITLE="$BRANCH" CTX="$CONTEXT" "$_PY" -c 'import os,json;print(json.dumps({"sessionTitle":os.environ["TITLE"],"additionalContext":os.environ["CTX"]}))'
+else
+  emit_context "$CONTEXT"
+fi
 
 exit 0

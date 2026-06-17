@@ -28,10 +28,10 @@ CHECKPOINT
 echo "Session checkpoint saved to .claude/session-checkpoint.md" >&2
 
 # --- Sync ## Active work section in MEMORY.md ---
+. "$(dirname "$0")/_lib.sh"
 MEMORY_FILE="$REPO_ROOT/MEMORY.md"
-if [ -f "$MEMORY_FILE" ]; then
-  PYTHON_CMD=$(command -v python3 || command -v python)
-  "$PYTHON_CMD" -c "
+if [ -f "$MEMORY_FILE" ] && [ -n "$_PY" ]; then
+  "$_PY" -c "
 import re, sys
 
 memory_path = sys.argv[1]
