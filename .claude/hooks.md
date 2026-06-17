@@ -15,11 +15,13 @@ Hooks use the following exit code contract:
 Every hook sources `.claude/hooks/_lib.sh` instead of hand-rolling JSON parsing.
 This removes the hard dependency on `python3` (Windows + Git Bash ships only `python`):
 
-- `json_field <name>` / `json_field_multiline <name>` — extract a tool-input field
-  (python-first for correctness, `sed` fallback when no interpreter is present).
-- `guard_field <name>` — **fail-closed** extraction for guard hooks: if the key is
-  present in the raw input but parsing yields empty, the hook blocks (`exit 2`)
-  rather than silently allowing the action.
+- `json_field <name>` / `json_field_multiline <name>` — extract a tool param.
+  Claude Code nests params under `.tool_input`, so these read there first and fall
+  back to a top-level key (python-first for correctness, `sed` fallback otherwise).
+- `guard_require <name>` — **fail-closed** gate for guard hooks. **Call it in the
+  hook's main shell, never inside `$(...)`** — an `exit` from a command
+  substitution only kills the subshell. If the key is present in the raw input but
+  extraction yields empty (parse failure or empty value), it blocks (`exit 2`).
 - `guard_block <message>` — print to stderr and `exit 2`.
 - `emit_context <message>` — print `{"additionalContext": "..."}` to stdout (no block).
 - `resolve_module <file>` — returns `.` for the single-module root pom, a nested
