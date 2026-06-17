@@ -476,5 +476,6 @@ After resolving any non-obvious issue — a workaround, an unexpected environmen
 | test-agent | `agents/test-agent.md` | Test writing + coverage |
 | scaffold-agent | `agents/scaffold-agent.md` | New service bootstrap |
 | debug-agent | `agents/debug-agent.md` | Incident investigation (read-only) |
+| performance-agent | `agents/performance-agent.md` | Latency/capacity investigation (read-only) |
 
 Skills live in `.claude/skills/<name>/SKILL.md`. See each file for full instructions.
