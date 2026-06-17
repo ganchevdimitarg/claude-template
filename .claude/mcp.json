@@ -1,5 +1,11 @@
 {
   "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "description": "Live library documentation — Spring Boot, Avro, Kafka, Testcontainers, Resilience4j. Use before answering questions about any library API."
+    },
     "github": {
       "type": "url",
       "url": "https://api.githubcopilot.com/mcp/",
@@ -32,6 +38,8 @@
     }
   },
   "usage": {
+    "universal_servers": ["context7"],
+    "note": "context7 applies to all modules — omitted from module_mapping for brevity",
     "how_to_activate": "Add server names to .claude/settings.json under 'mcpServers' or use Claude Code's /mcp command.",
     "module_mapping": {
       "api-gateway":          ["github"],
