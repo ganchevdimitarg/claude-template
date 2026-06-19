@@ -11,7 +11,8 @@ TARGET="${FILE_PATH}${CMD:+ $CMD}"
 
 PATTERNS=(
   '\.env(\.|$)' '\.pem(\s|$)' '\.key(\s|$)' '\.p12(\s|$)' '\.pfx(\s|$)' '\.jks(\s|$)'
-  '[^a-z]secrets?\.' '[^a-z]credentials?[^a-z]' 'id_rsa' 'id_ed25519' 'id_ecdsa'
+  '(^|[^a-z])secrets?\.(ya?ml|json|properties|env|conf|cfg|toml|txt|enc|p12|pfx|jks|der)'
+  '[^a-z]credentials?[^a-z]' 'id_rsa' 'id_ed25519' 'id_ecdsa'
   'application-prod(uction)?\.ya?ml'
 )
 for p in "${PATTERNS[@]}"; do
