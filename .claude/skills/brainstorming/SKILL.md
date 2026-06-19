@@ -11,6 +11,8 @@ Start by understanding the current project context, then ask questions one at a 
 
 <HARD-GATE>
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+
+**User override:** User instructions outrank this skill. If the user explicitly opts out ("just build it, skip the design"), honour it — state in one line what you are skipping and the risk it carries, then proceed. Do not re-litigate. Absent an explicit opt-out, the gate holds.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
