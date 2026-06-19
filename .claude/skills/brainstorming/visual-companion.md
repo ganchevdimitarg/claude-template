@@ -296,3 +296,12 @@ If the session used `--project-dir`, mockup files persist in `.superpowers/brain
 
 - Frame template (CSS reference): `scripts/frame-template.html`
 - Helper script (client-side): `scripts/helper.js`
+
+## Fallback — when the companion will not start
+
+The visual companion is optional. If it fails, degrade gracefully and keep brainstorming in the terminal:
+
+- **No Node / `node` not found** → tell the user in one line, continue text-only with ASCII layout sketches and lettered options.
+- **Port already in use** → try `stop-server.sh` once; if it still fails, fall back to text-only rather than hunting ports.
+- **No browser opens** → give the user the local URL once; if they cannot open it, fall back to text-only.
+- **Any other error** → do not retry more than once and never block the design flow on the tool. The companion is a convenience, not a dependency; the gate and the design flow proceed without it.

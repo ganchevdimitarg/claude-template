@@ -169,3 +169,5 @@ A question about a UI topic is not automatically a visual question. "What does p
 
 If they agree to the companion, read the detailed guide before proceeding:
 `skills/brainstorming/visual-companion.md`
+
+**If the companion cannot start** (no Node, port in use, no browser), say so in one line and fall back to text and ASCII sketches — never block the session on the visual tool.
