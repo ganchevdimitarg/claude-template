@@ -21,3 +21,6 @@ target/
 
 # Windows / Git Bash crash dumps
 sh.exe.stackdump
+
+# code-review-graph local knowledge-graph DB (machine-specific build artifact)
+.code-review-graph/
