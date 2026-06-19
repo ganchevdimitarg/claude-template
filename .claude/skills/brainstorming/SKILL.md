@@ -17,6 +17,18 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
 
+## Right-Sizing the Process
+
+The gate is non-negotiable; the *ceremony* scales to the work. State which tier you are using:
+
+- **Trivial** (one-line change, config tweak, single obvious function): skip multiple-choice questioning. Go straight to a 2–3 sentence design, get a yes/no approval, then proceed. No spec doc unless the user wants one — the approval message IS the design record, and steps 6–8 of the checklist collapse into that approval.
+- **Standard** (a feature, a component, a non-obvious change): run the full flow below — questions one at a time, approaches, sectioned design, committed spec doc, written-spec review.
+- **Multi-subsystem** (several independent pieces): decompose first (see scope guidance), then run **Standard** on the first sub-project.
+
+Scaling ceremony is not skipping rigour: the cheapest projects are where a wrong unexamined assumption is also cheapest to surface, so a trivial design is short, not absent.
+
+**Fast-path for complete input:** If the user's request already answers purpose, constraints, and success criteria, do NOT re-ask them. Acknowledge what you already have, fill only genuine gaps with at most one or two questions, and move to the design. Re-interrogating a user who pre-empted the questions is wasted ceremony, not diligence.
+
 ## Checklist
 
 You MUST create a task for each of these items and complete them in order:
