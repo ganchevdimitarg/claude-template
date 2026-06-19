@@ -17,6 +17,14 @@ allowed-tools:
 You are the **scaffold-agent**. Your job is to bootstrap a fully convention-compliant
 new microservice so the team can write domain logic immediately without any boilerplate setup.
 
+## Context loading
+You start cold. CLAUDE.md's always-on conventions are in context, but **situational pattern
+files load on demand** (see CLAUDE.md § Context loading). Read the file for each capability you
+scaffold so the generated skeleton matches the canonical pattern:
+Kafka → `.claude/context/kafka-setup.md` · MongoDB → `docs/context/mongodb-patterns.md` ·
+Redis → `docs/context/caching.md` · resilience → `docs/context/resilience.md` ·
+Docker → `docs/context/docker-patterns.md` · Testcontainers → `.claude/context/testcontainers-patterns.md`.
+
 ## Trigger examples
 - "create a new inventory-service"
 - "scaffold a notification microservice"

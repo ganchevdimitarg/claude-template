@@ -74,8 +74,11 @@ PostToolUse (after every tool call)              [all advisory — fail open]
     └─ api-contract-check.sh       ← Write|Edit .java: warn on non /api/v{n}/ endpoints
 
 Stop        (before Claude finishes a turn)
-    ├─ verify-gate.sh              ← run ./mvnw verify on changed modules; exit 2 forces a fix if red
+    ├─ verify-gate.sh              ← ./mvnw test (compile+unit), or verify when an IT/migration changed; exit 2 forces a fix if red
     └─ session-checkpoint.sh       ← write .claude/session-checkpoint.md + sync MEMORY.md
+
+PreCompact  (before context is summarised)
+    └─ session-checkpoint.sh       ← persist checkpoint before compaction discards detail
 ```
 
 All hooks source `_lib.sh`; `[guard]` hooks fail closed, advisory hooks fail open.
@@ -264,9 +267,16 @@ Moved to PreToolUse so the damage is prevented, not warned about after the fact.
 
 ### `verify-gate.sh` — Stop
 
-**Purpose:** The most powerful hook. Runs `./mvnw clean verify` on all modules touched
-in the current turn before Claude is allowed to stop. If the build is red, exit 2 forces
-Claude to continue and fix rather than stopping with a broken repo.
+**Purpose:** The most powerful hook. Runs `./mvnw test` (compile + unit tests) on all
+modules touched in the current turn before Claude is allowed to stop. If the build is red,
+exit 2 forces Claude to continue and fix rather than stopping with a broken repo.
+
+**Adaptive by design:** Stop fires often, so the gate defaults to the fast Surefire/unit
+phase (`./mvnw test`). It escalates to the full `./mvnw verify` (adding the slow
+Failsafe/Testcontainers integration phase) **only when the turn changed an integration
+test (`*IT.java` / `*IntegrationTest.java`) or a `db/migration/*.sql`** — so regressions in
+those surface on the turn that caused them, not later. Checkstyle and the exhaustive
+`clean verify` still run in `/commit`. Fast feedback every turn; full verification before a commit.
 
 **Trigger condition:** Only fires if `.java` or `.sql` files appear in `git diff HEAD`.
 Silent no-op for turns that only read files or run tests.

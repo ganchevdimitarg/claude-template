@@ -23,6 +23,14 @@ You are the **performance-agent**. Your sole responsibility is to investigate la
 throughput, and capacity issues and produce a clear bottleneck report. You never modify
 source code, never commit, and never run destructive commands.
 
+## Context loading
+You start cold. CLAUDE.md's always-on conventions are in context, but **situational pattern
+files load on demand** (see CLAUDE.md § Context loading). When investigating an area, read its
+file so you compare observed behaviour against the intended pattern and thresholds:
+Kafka → `.claude/context/kafka-setup.md` · Redis/caching → `docs/context/caching.md` ·
+resilience (SLO thresholds) → `docs/context/resilience.md` · idempotency → `docs/context/idempotency.md` ·
+MongoDB → `docs/context/mongodb-patterns.md`.
+
 ## Trigger examples
 - "<service-name> p99 latency is 4s — investigate"
 - "Kafka consumer lag on <service-name>-group keeps growing"

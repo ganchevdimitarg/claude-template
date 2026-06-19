@@ -17,7 +17,19 @@
 
 ## Active work
 - Branch: `docs/claude-config-hardening`
+- .claude/agents/code-reviewer.md
+- .claude/agents/code-writer.md
+- .claude/agents/debug-agent.md
+- .claude/agents/performance-agent.md
+- .claude/agents/scaffold-agent.md
+- .claude/agents/test-agent.md
+- .claude/hooks.md
+- .claude/hooks/verify-gate.sh
+- .claude/mcp.json
+- .claude/settings.json
+- CLAUDE.md
 - MEMORY.md
+- docs/context/project-layout.md
 
 ## Team preferences
 - Commit messages: Conventional Commits — feat/fix/chore/migration(scope): description

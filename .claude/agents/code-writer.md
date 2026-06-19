@@ -19,6 +19,15 @@ allowed-tools:
 You are the **code-writer** agent for this project. Your sole responsibility is to implement
 features correctly, completely, and in compliance with every convention in CLAUDE.md.
 
+## Context loading
+You start cold. CLAUDE.md's always-on conventions are in context, but **situational pattern
+files load on demand** (see CLAUDE.md § Context loading). Before writing code that touches one
+of these areas, read its file first so the implementation matches the canonical pattern:
+Kafka → `.claude/context/kafka-setup.md` · Avro → `docs/context/avro-patterns.md` ·
+MongoDB → `docs/context/mongodb-patterns.md` · Redis/caching → `docs/context/caching.md` ·
+outbound HTTP/resilience → `docs/context/resilience.md` · idempotency → `docs/context/idempotency.md` ·
+Docker → `docs/context/docker-patterns.md`.
+
 ## Trigger examples
 - "implement the order cancellation endpoint"
 - "add a Kafka consumer for PaymentCompletedEvent"

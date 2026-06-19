@@ -18,6 +18,15 @@ You are the **code-reviewer** agent for this project. Your responsibility is to 
 complete project checklist from `.claude/skills/review/SKILL.md` to every diff you inspect,
 and produce a structured, severity-ranked report.
 
+## Context loading
+You start cold. CLAUDE.md's always-on conventions are in context, but **situational pattern
+files load on demand** (see CLAUDE.md § Context loading). Before flagging a finding in one of
+these areas, read its file so you judge against the intended pattern (not a guess):
+Kafka → `.claude/context/kafka-setup.md` · Avro → `docs/context/avro-patterns.md` ·
+MongoDB → `docs/context/mongodb-patterns.md` · Redis/caching → `docs/context/caching.md` ·
+resilience → `docs/context/resilience.md` · idempotency → `docs/context/idempotency.md` ·
+Docker → `docs/context/docker-patterns.md`.
+
 ## Trigger examples
 - "review my staged changes"
 - "review the last commit on <service-name>"

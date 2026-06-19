@@ -1,5 +1,37 @@
 # CLAUDE.md
 
+> **Repo maturity — read first.** This is a **single-module Spring Boot template**
+> (`com.ganchevdimitarg.claudetemplate`), not yet a multi-service platform. The
+> conventions below describe the *target* architecture. Sections on Kafka, MongoDB,
+> Avro/Schema Registry, api-gateway, choreography sagas, and cross-service resilience
+> are **aspirational** — apply them only once the corresponding module actually exists.
+> Until then, treat `<service-name>` as a placeholder and prefer the single-module
+> guidance in `docs/context/project-layout.md`. Do not scaffold infrastructure the repo
+> has no code for.
+
+---
+
+## Context loading (progressive disclosure)
+
+Core conventions in this file are always in context. **Detailed pattern files load on
+demand** — read the file when the task actually touches that area, not before. This keeps
+every session lean and avoids paying the token cost of infrastructure the repo has no code
+for yet. The `@import` lines below pull in only the cross-cutting patterns that apply to
+*any* code in this repo; everything situational is in the table.
+
+| When you work on… | Read on demand |
+|---|---|
+| Outbound HTTP / circuit breakers | `docs/context/resilience.md` |
+| Mutating cross-service endpoints | `docs/context/idempotency.md` |
+| Redis / caching | `docs/context/caching.md` |
+| Kafka producers / consumers | `.claude/context/kafka-setup.md` |
+| Avro schemas / Schema Registry | `docs/context/avro-patterns.md` |
+| MongoDB documents / queries | `docs/context/mongodb-patterns.md` |
+| Dockerfiles | `docs/context/docker-patterns.md` |
+
+**Always loaded** (imported inline below): Java 25 platform, Lombok/records, security,
+pagination, exceptions, validation, database, Testcontainers, project layout.
+
 ## Stack
 - Java 25 · virtual threads default · ScopedValue over ThreadLocal · SequencedCollection APIs · records preferred over classes for data carriers
 - Spring Boot 4 · WebMVC for business services · WebFlux for api-gateway · no XML config · problem+json errors (RFC 9457)
@@ -96,7 +128,7 @@
 Every outbound HTTP call must be wrapped with `@CircuitBreaker` + `@Bulkhead` + `@TimeLimiter`.
 Default thresholds (override per-service in `application.yml`): failure rate 50%, slow call 2s, wait open 30s, half-open 5 calls, bulkhead 10 concurrent, timeout 5s.
 Fallback method must have same signature as original + `Throwable` param.
-@docs/context/resilience.md
+→ Detail on demand: `docs/context/resilience.md` (load only when adding outbound HTTP calls).
 
 ---
 
@@ -110,7 +142,7 @@ persistent state must support idempotency via `Idempotency-Key` header.
 - On miss: process, store response with 24h TTL, return
 - Key is never per-user — scoped to service only
 - Never implement a POST/PUT/PATCH that mutates without idempotency support
-@docs/context/idempotency.md
+→ Detail on demand: `docs/context/idempotency.md` (load when adding a mutating endpoint).
 
 ---
 
@@ -211,7 +243,7 @@ Invalidation strategies (pick one per use case):
 - **Write-through**: on every write to DB, also update/delete the cache key
 - **Event-driven**: on Kafka event (e.g. `ProductUpdated`), delete the cache key
 
-@docs/context/caching.md
+→ Detail on demand: `docs/context/caching.md` (load when introducing Redis caching).
 
 ---
 
@@ -249,7 +281,7 @@ Rules:
 - Cache-aside pattern: read cache → on miss read DB → write cache with TTL
 - Distributed lock: Redisson `RLock` for idempotency guards — never `SETNX` manually
 
-@docs/context/caching.md
+→ Detail on demand: `docs/context/caching.md` (cache-aside / write-through / event-driven examples).
 
 ---
 
@@ -263,7 +295,7 @@ Rules:
 - Use `@KafkaListener` with explicit `groupId`; never rely on default group ID
 - Idempotency: check `correlationId` in Redis before processing to prevent duplicate handling
 
-@.claude/context/kafka-setup.md
+→ Detail on demand: `.claude/context/kafka-setup.md` (producer/consumer config + patterns).
 
 ### Avro / Schema Registry
 - All event schemas live in `common-events/src/main/avro/<domain>/` as `.avsc` files
@@ -275,7 +307,7 @@ Rules:
   - Never change a field from optional to required
 - Register schema before producing; CI runs `mvn schema-registry:register` on `common-events` build
 
-@docs/context/avro-patterns.md
+→ Detail on demand: `docs/context/avro-patterns.md` (schema layout, evolution, commands).
 
 ---
 
@@ -287,7 +319,7 @@ Rules:
 - Aggregation pipeline over app-side joins — never load a full collection to filter in Java
 - Never use `findAll()` without a filter on large collections — always paginate or stream
 
-@docs/context/mongodb-patterns.md
+→ Detail on demand: `docs/context/mongodb-patterns.md` (indexes, aggregation pipeline).
 
 ---
 
@@ -343,7 +375,7 @@ Extend `AbstractIntegrationTest` from `common-test` — never redeclare containe
 ## Docker
 
 Multi-stage build: `eclipse-temurin:25-jdk` → `eclipse-temurin:25-jre`. Non-root user. Explicit artifact name (no `*.jar` glob). HEALTHCHECK mandatory.
-@docs/context/docker-patterns.md
+→ Detail on demand: `docs/context/docker-patterns.md` (multi-stage template).
 
 ---
 
