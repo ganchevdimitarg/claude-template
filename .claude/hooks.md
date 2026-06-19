@@ -141,10 +141,19 @@ Create a feature branch first:
 
 ### `protect-secrets.sh` — PreToolUse · Read|Write|Edit|Bash
 
-**Purpose:** Blocks any tool operation whose target path matches known secrets file patterns.
+**Purpose:** Blocks tool access to secrets files. For `Read`/`Write`/`Edit` it matches the
+`file_path` directly. For `Bash` it splits the command into path-like **tokens** and matches
+each one — it never greps the raw command line, so prose in a commit message or heredoc body
+(e.g. a `secrets.yml` mentioned in a message) does not trip the guard. `git commit`/`tag`/
+`merge`/`stash` are skipped entirely (their message text is prose); secret *content* staged in
+a commit is caught by `secret-scan.sh` instead.
 
-**Blocked patterns:** `.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`,
-`secrets.`, `credentials`, `id_rsa`, `id_ed25519`, `application-prod.yml`, `application-production.yml`
+**Blocked patterns:** `*.env`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.der`,
+`secrets.<data-ext>` (`yml`/`json`/`properties`/`env`/`conf`/`cfg`/`toml`/`txt`/`enc`/…),
+`credentials` (file), `id_rsa`, `id_ed25519`, `id_ecdsa`,
+`application-prod.yml`, `application-production.yml`.
+The `secrets.` rule requires a real secret-data extension, so guard scripts such as
+`protect-secrets.sh` are **not** matched.
 
 **Exit:** `2` on match with explanation and redirect to environment variables / secrets manager.
 

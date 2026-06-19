@@ -56,9 +56,16 @@ assert_exit "fail-closed empty command"   2 block-dangerous.sh "$(ti '{"command"
 assert_exit "fail-closed empty file_path" 2 protect-secrets.sh "$(ti '{"file_path":""}')"
 
 # --- protect-secrets: paths + commands touching secrets ---
-assert_exit "protect-secrets blocks dotenv" 2 protect-secrets.sh "$(ti '{"file_path":"app/.env"}')"
-assert_exit "protect-secrets blocks pem"    2 protect-secrets.sh "$(ti '{"file_path":"certs/server.pem"}')"
-assert_exit "protect-secrets allows java"   0 protect-secrets.sh "$(ti '{"file_path":"src/Main.java"}')"
+assert_exit "protect-secrets blocks dotenv"      2 protect-secrets.sh "$(ti '{"file_path":"app/.env"}')"
+assert_exit "protect-secrets blocks pem"         2 protect-secrets.sh "$(ti '{"file_path":"certs/server.pem"}')"
+assert_exit "protect-secrets blocks secrets.yml" 2 protect-secrets.sh "$(ti '{"file_path":"config/secrets.yml"}')"
+assert_exit "protect-secrets allows java"        0 protect-secrets.sh "$(ti '{"file_path":"src/Main.java"}')"
+# false-positive fixed: the guard scripts are not secret material
+assert_exit "protect-secrets allows own hook"    0 protect-secrets.sh "$(ti '{"file_path":".claude/hooks/protect-secrets.sh"}')"
+# Bash: real secret-file access is blocked by token, prose is not
+assert_exit "protect-secrets blocks cat dotenv"  2 protect-secrets.sh "$(ti '{"command":"cat app/.env"}')"
+assert_exit "protect-secrets allows normal cmd"  0 protect-secrets.sh "$(ti '{"command":"./mvnw -q test"}')"
+assert_exit "protect-secrets allows commit prose" 0 protect-secrets.sh "$(ti '{"command":"git commit -m \"handle secrets.yml\""}')"
 
 assert_exit "secret-scan ignores non-commit" 0 secret-scan.sh "$(ti '{"command":"ls"}')"
 
