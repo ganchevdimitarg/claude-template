@@ -54,6 +54,15 @@ export JIRA_MCP_URL=<url>
 export JIRA_TOKEN=<token>
 ```
 
+## code-review-graph — local knowledge-graph (review/explore skills)
+
+The root `.mcp.json` invokes the bare command `code-review-graph`, so the CLI must be on
+`PATH` (`pip install code-review-graph`). On a fresh checkout where it is not on `PATH`, the
+server will not connect — either add it to `PATH`, or set the `command` in `.mcp.json` (and any
+narrow allow in `settings.local.json`) to the absolute path of `code-review-graph.exe`.
+Run `code-review-graph build` once per repo to create `.code-review-graph/`. Verify with
+`claude mcp list` (the server must show as connected).
+
 ## context7 — live library docs
 
 No environment variable or token required. Activates automatically from `.claude/mcp.json` on session start.

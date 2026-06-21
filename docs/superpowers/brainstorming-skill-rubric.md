@@ -4,7 +4,7 @@ Scope: `.claude/skills/brainstorming/`. Score = mean of 7 dimensions × 10.
 
 | Dimension | Target | Acceptance criterion (verifiable) |
 |---|---|---|
-| Activation | 9 | `description:` in SKILL.md unchanged from upstream 6.0.3 |
+| Activation | 9 | `description:` preserves the upstream 6.0.3 activation trigger verbatim, plus a project-canonical marker disambiguating it from `superpowers:brainstorming` |
 | Discipline | 10 | HARD-GATE contains an explicit **User override** clause (T3) AND approaches are conditional (T4) |
 | Structure | 10 | 9-step checklist + dot flow graph present (unchanged) |
 | Progressive disclosure | 10 | Companion fallback present in BOTH SKILL.md and visual-companion.md (T6) |
@@ -22,7 +22,7 @@ Scope: `.claude/skills/brainstorming/`. Score = mean of 7 dimensions × 10.
 - [ ] AC5-dedup:    `[ "$(grep -c "The terminal state is invoking writing-plans" .claude/skills/brainstorming/SKILL.md)" = "0" ]` (standalone redundant line removed)
 - [ ] AC6-skillfb:  `grep -qi "fall back to text" .claude/skills/brainstorming/SKILL.md`
 - [ ] AC6-vcfb:     `grep -qi "## Fallback" .claude/skills/brainstorming/visual-companion.md`
-- [ ] AC-desc:      description line byte-identical to upstream (manual diff)
+- [ ] AC-desc:      description retains the upstream activation trigger verbatim AND adds the "Project-canonical fork" marker so it wins over `superpowers:brainstorming` (manual read)
 - [ ] AC-gate:      HARD-GATE still requires design + approval before implementation (manual read)
 
 ## Final score (post-implementation)
