@@ -1,5 +1,5 @@
 {
-  "_note": "Copy to settings.local.json (gitignored) and replace <...> placeholders. This is the recommended minimal safe baseline - narrow allows, never blanket 'Bash(bash *)' / 'Bash(git *)'. The deny list and PreToolUse guard hooks are your real safety net; keep this allow-list tight.",
+  "_note": "Copy to settings.local.json (gitignored), then add only the narrow, machine-specific allows you need (e.g. absolute tool paths). This is the recommended minimal safe baseline - never blanket 'Bash(bash *)' / 'Bash(git *)'. The deny list and PreToolUse guard hooks are your real safety net; keep this allow-list tight.",
   "permissions": {
     "allow": [
       "Bash(./mvnw *)",
