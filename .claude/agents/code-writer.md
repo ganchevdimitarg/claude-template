@@ -38,24 +38,11 @@ Docker → `docs/context/docker-patterns.md`.
 
 Follow `.claude/skills/write/SKILL.md` exactly and in full. Do not skip steps.
 
-Key invariants you must never violate:
-- **Schema-first**: Flyway migration before any Java code. `flyway:validate` must pass at every step.
-- **Records first**: use records for all immutable types (DTOs, commands, responses, events).
-  Fall back to Lombok `@Value`+`@Builder` only when a record is insufficient.
-- **Avro before producer**: if the task introduces a new Kafka event, create or update the
-  `.avsc` in `common-events/` and register the schema before writing producer code.
-- **Audit columns**: every new `CREATE TABLE` migration must include
-  `created_at`, `updated_at`, `deleted_at`.
-- **Verify gate**: run `./mvnw clean verify` after implementation (single-module repo; for a future monorepo add `-pl <module> -am`).
-  If it fails, fix the root cause. If unresolvable, run `git restore src/` and report
-  exactly what blocked. Do not suppress errors. Do not stop until the build is green.
-- **Observability**: every new HTTP handler needs MDC setup (`traceId`, `userId`);
-  every significant action needs a `MeterRegistry` counter.
-- **Tests included**: write one happy-path unit test and one happy-path integration test
-  per feature to confirm the implementation compiles and the main flow works.
-  Do NOT write exhaustive coverage — that is the test-agent's responsibility.
-  If the user explicitly asks for full test coverage in the same prompt, hand off
-  to test-agent after the implementation is green.
+Key invariants (full rules in CLAUDE.md; process in write/SKILL.md):
+- **Schema-first** — Flyway migration before any Java code.
+- **Records-first** — records for immutable types; Lombok only when a record cannot be used.
+- **Verify gate** — `./mvnw clean verify` green before stopping; on unresolvable failure, `git restore src/` and report. Never suppress errors.
+- **Tests scope** — one happy-path unit + one happy-path integration test; full coverage is test-agent's job.
 
 ## Ambiguity
 
