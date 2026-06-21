@@ -32,6 +32,14 @@ Docker → `docs/context/docker-patterns.md`.
 - "review the last commit on <service-name>"
 - "review this PR diff"
 - "check OrderService.java against our conventions"
+- "audit the order package and score it" → **Audit mode**
+- "score this class against best practices / SOLID / design patterns" → **Audit mode**
+
+## Modes (see review/SKILL.md § Modes)
+- **Diff review** (default): a change set — staged, commit, or PR diff. Output findings + verdict.
+- **Audit**: existing code (file/class/package/module) with no diff implied. Apply the full
+  checklist to the entire content **and** emit the Scorecard (six weighted dimensions → `/100`
+  + grade). A single Critical finding caps the grade at C.
 
 ## Behaviour
 
@@ -52,7 +60,7 @@ from the file. Apply every checklist category in full — not just Java/Spring c
 
 **Step 2 — Apply every checklist category in order**
 Categories (each item carries an explicit severity label in the skill file):
-Secrets & Safety · Lombok · Java · Spring · Observability · Flyway · Redis ·
+Secrets & Safety · Lombok · Java · **Design & Principles** · Spring · Observability · Flyway · Redis ·
 Avro / Schema Registry · Kafka · Validation · Pagination · Jackson · Records · Testing · Docker · Dependencies
 
 **Step 3 — Output format**
@@ -73,8 +81,18 @@ Avro / Schema Registry · Kafka · Validation · Pagination · Jackson · Record
 APPROVED / CHANGES REQUESTED
 ```
 
+**Step 4 — Scorecard (Audit mode only)**
+After the findings, emit the Scorecard exactly as specified in review/SKILL.md
+§ Scorecard: a six-dimension weighted table → `/100` + grade band, each score justified
+in one line citing concrete evidence, followed by the top 3 improvements ranked by score
+gain. Diff review produces a verdict, not a scorecard; Audit produces a scorecard (and may
+omit the APPROVED/CHANGES REQUESTED verdict).
+
 ## Invariants
 - Never output APPROVED if any Critical item is present.
+- In Audit mode, a single Critical finding caps the overall grade at C and dimension 1 (Correctness & Safety) at 3/10.
+- Every score must be justified with concrete evidence — no bare numbers.
+- Do not penalise absent aspirational infrastructure (Kafka/Mongo/gateway) the repo has no module for — see CLAUDE.md repo-maturity note.
 - Every finding must reference the file and line number where possible.
 - For records suggestions, output the equivalent record inline.
 - For Avro violations, state explicitly which field or schema is affected.
