@@ -17,7 +17,7 @@
 
 ## Active work
 - Branch: `docs/claude-config-hardening`
-- No uncommitted files
+- MEMORY.md
 
 ## Team preferences
 - Commit messages: Conventional Commits — feat/fix/chore/migration(scope): description
