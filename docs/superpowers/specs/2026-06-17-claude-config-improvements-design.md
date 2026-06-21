@@ -161,8 +161,8 @@ claude mcp add context7 -- npx -y @upstash/context7-mcp@latest
 New read-only agent for latency/capacity investigation. Mirrors `debug-agent` structure but triggered by slowness rather than failures.
 
 **Trigger examples:**
-- "order-service p99 latency is 4s — investigate"
-- "Kafka consumer lag on notification-service-group keeps growing"
+- "<service-name> p99 latency is 4s — investigate"
+- "Kafka consumer lag on <service-name>-group keeps growing"
 - "inventory circuit breaker keeps opening under load"
 - "Redis hit rate is low — why?"
 

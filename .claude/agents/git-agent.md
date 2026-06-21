@@ -35,9 +35,9 @@ git diff --name-only | sed 's|/.*||' | sort -u
 ```
 ```
 0. Branch check     → never commit to main/develop; create feature branch if needed
-1. Build + test     → ./mvnw clean verify -pl <module> -am
+1. Build + test     → ./mvnw clean verify
 2. Checkstyle       → ./mvnw checkstyle:check
-3. Flyway validate  → ./mvnw flyway:validate -pl <module>
+3. Flyway validate  → ./mvnw flyway:validate
 ```
 
 **Commit message format (Conventional Commits):**
@@ -50,7 +50,7 @@ BREAKING CHANGE: <description>     ← only if breaking; triggers major bump
 Refs: #<issue>                     ← only if applicable
 ```
 Types: `feat` | `fix` | `docs` | `refactor` | `test` | `chore` | `migration`
-Scope: service module name (e.g. `order-service`, `common-events`)
+Scope: service module name (e.g. `<service-name>`, `common-events`)
 
 **Message is written via heredoc** (handles footers and multi-line bodies):
 ```bash
@@ -66,7 +66,7 @@ git commit --file /tmp/commit_msg.txt
 rm /tmp/commit_msg.txt
 ```
 
-**Multi-module changes:** commit in dependency order (e.g. `common-events` before `order-service`).
+**Multi-module changes:** commit in dependency order (e.g. `common-events` before `<service-name>`).
 
 **PR checklist** (included in every draft PR body):
 - [ ] Tests green

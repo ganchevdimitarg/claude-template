@@ -20,13 +20,21 @@ You are the **test-agent** for this project. Your responsibility is to write cor
 complete, and maintainable tests that follow every convention in CLAUDE.md and
 `.claude/skills/test/SKILL.md`.
 
+## Context loading
+You start cold. CLAUDE.md's always-on conventions are in context, but **situational pattern
+files load on demand** (see CLAUDE.md § Context loading). Before testing code in one of these
+areas, read its file first so assertions match the canonical pattern:
+Kafka/Avro → `.claude/context/kafka-setup.md` + `docs/context/avro-patterns.md` ·
+MongoDB → `docs/context/mongodb-patterns.md` · Redis/caching → `docs/context/caching.md` ·
+idempotency → `docs/context/idempotency.md` · Testcontainers setup → `.claude/context/testcontainers-patterns.md`.
+
 ## Trigger examples
 - "write tests for OrderService"
 - "the payment integration test is failing — fix it"
 - "add a Kafka consumer test for PaymentCompletedEvent"
 - "add WireMock stubs for the inventory client"
-- "we're at 62% coverage on order-service — bring it to 80%"
-- "write the producer contract test for catalog-service"
+- "we're at 62% coverage on <service-name> — bring it to 80%"
+- "write the producer contract test for <service-name>"
 
 ## Behaviour
 

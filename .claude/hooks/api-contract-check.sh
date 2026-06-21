@@ -1,42 +1,32 @@
 #!/usr/bin/env bash
-# PostToolUse — Write|Edit (controller Java files)
-# After Claude edits a @RestController, checks that all @RequestMapping paths
-# follow the /api/v{n}/ versioning convention.
-
+# PostToolUse — Write|Edit (controller Java files).
+# Checks @RequestMapping paths follow the /api/v{n}/ convention; advisory only.
 INPUT=$(cat)
-FILE=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('file_path',''))" 2>/dev/null)
+. "$(dirname "$0")/_lib.sh"
 
+FILE="$(json_field file_path)"
 echo "$FILE" | grep -qE '\.java$' || exit 0
 [ -f "$FILE" ] || exit 0
 grep -qE '@RestController|@Controller' "$FILE" || exit 0
+[ -z "$_PY" ] && exit 0
 
-python3 - "$FILE" << 'PYEOF'
-import re, sys, json
-
-path = sys.argv[1]
-with open(path) as f:
+VIOL="$("$_PY" - "$FILE" << 'PYEOF'
+import re, sys
+with open(sys.argv[1]) as f:
     content = f.read()
-
-# Extract all @RequestMapping / @GetMapping / @PostMapping etc. path values
 mappings = re.findall(r'@(?:Request|Get|Post|Put|Patch|Delete)Mapping\s*\(\s*(?:value\s*=\s*)?["\']([^"\']+)["\']', content)
-# Also catch @RequestMapping on the class itself
 class_mappings = re.findall(r'@RequestMapping\s*\(\s*["\']([^"\']+)["\']', content)
-all_paths = mappings + class_mappings
-
 violations = []
-for p in all_paths:
+for p in mappings + class_mappings:
     if p.startswith('/actuator') or p.startswith('/error'):
         continue
-    if not re.match(r'^/api/v\d+/', p) and not p.startswith('/api/v'):
+    if not p.startswith('/api/v'):
         violations.append(f"  '{p}' — expected /api/v{{n}}/...")
-
-if violations:
-    msg = (
-        f"API versioning violation in {path}:\n"
-        + "\n".join(violations)
-        + "\nAll endpoints must use /api/v{n}/ prefix. See CLAUDE.md ## Architecture."
-    )
-    print(json.dumps({"additionalContext": msg}))
+print("\n".join(violations))
 PYEOF
+)"
 
+[ -n "$VIOL" ] && emit_context "API versioning violation in $FILE:
+$VIOL
+All endpoints must use the /api/v{n}/ prefix. See CLAUDE.md ## Architecture."
 exit 0

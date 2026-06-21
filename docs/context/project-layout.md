@@ -39,5 +39,6 @@ Not a multi-module microservice repo — adapt module-specific rules accordingly
 ```
 
 ## Note on your current structure
-- Your agents folder is named `.claude/agent/` (singular). Claude Code expects `.claude/agents/` (plural). Rename it.
-- When you add microservice modules later, give each its own `CLAUDE.md` and add `docs/sagas/` for cross-service flows.
+- Agents live in `.claude/agents/` (plural) — the layout Claude Code expects. ✓
+- `docs/sagas/` already holds a `_template.md`; add one flow doc per cross-service saga as modules appear.
+- When you add microservice modules later, give each its own `CLAUDE.md`.

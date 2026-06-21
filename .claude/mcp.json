@@ -1,53 +1,17 @@
 {
-  "mcpServers": {
-    "context7": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@latest"],
-      "description": "Live library documentation — Spring Boot, Avro, Kafka, Testcontainers, Resilience4j. Use before answering questions about any library API."
-    },
-    "github": {
-      "type": "url",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "description": "GitHub MCP — read PRs, issues, CI status. Active in all modules.",
-      "note": "Requires GITHUB_TOKEN env var with repo scope."
-    },
-    "postgres": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "${POSTGRES_MCP_URL}"],
-      "description": "Postgres MCP — inspect live schema, indexes, row counts before writing migrations.",
-      "note": "Set POSTGRES_MCP_URL=postgresql://user:pass@localhost:5432/dbname. Active in order-service, payment-service, notification-service.",
-      "env": {
-        "POSTGRES_MCP_URL": "${POSTGRES_MCP_URL}"
-      }
-    },
-    "schema-registry": {
-      "type": "url",
-      "url": "${SCHEMA_REGISTRY_MCP_URL}",
-      "description": "Confluent Schema Registry MCP — query registered Avro schemas, check compatibility.",
-      "note": "Set SCHEMA_REGISTRY_MCP_URL. Active in common-events, any service producing Kafka events.",
-      "status": "optional — connect only if Schema Registry MCP server is deployed"
-    },
-    "jira": {
-      "type": "url",
-      "url": "${JIRA_MCP_URL}",
-      "description": "Jira MCP — read ticket descriptions, acceptance criteria, and linked subtasks.",
-      "note": "Set JIRA_MCP_URL and JIRA_TOKEN. inject-git-context.sh extracts issue number from branch name.",
-      "status": "optional — connect if team uses Jira"
-    }
+  "_note": "Reference catalogue only — Claude Code does NOT load this file. Active servers are defined in the repo-root .mcp.json AND must be approved in .claude/settings.local.json under `enabledMcpjsonServers`. A server defined in .mcp.json but absent from `enabledMcpjsonServers` is NOT live. `status` below reflects the true end-to-end state.",
+  "_activate": {
+    "1_define": "Add the server block to the repo-root .mcp.json (see `command`/`url` below).",
+    "2_enable": "Add the server name to `enabledMcpjsonServers` in .claude/settings.local.json.",
+    "3_auth":   "Export any env vars the server needs (see `env`), then restart Claude Code.",
+    "4_verify": "Run `claude mcp list` (or start with `--mcp-debug`) — the server must show as connected."
   },
-  "usage": {
-    "universal_servers": ["context7"],
-    "note": "context7 applies to all modules — omitted from module_mapping for brevity",
-    "how_to_activate": "Add server names to .claude/settings.json under 'mcpServers' or use Claude Code's /mcp command.",
-    "module_mapping": {
-      "api-gateway":          ["github"],
-      "catalog-service":      ["github"],
-      "order-service":        ["github", "postgres", "jira"],
-      "payment-service":      ["github", "postgres", "jira"],
-      "notification-service": ["github", "postgres"],
-      "common-events":        ["github", "schema-registry"]
-    }
+  "available": {
+    "context7":        { "status": "live",      "where": "root .mcp.json + enabledMcpjsonServers", "command": "npx -y @upstash/context7-mcp@latest", "env": [], "purpose": "Live library docs (Spring Boot, Avro, Kafka, Testcontainers, Resilience4j)." },
+    "github":          { "status": "live",      "where": "root .mcp.json + enabledMcpjsonServers", "url": "https://api.githubcopilot.com/mcp/", "env": ["GITHUB_TOKEN (repo scope) or OAuth on first connect"], "purpose": "Read PRs, issues, CI status. First connect may prompt for auth." },
+    "code-review-graph": { "status": "live",     "where": "root .mcp.json + enabledMcpjsonServers", "command": "code-review-graph serve --auto-watch", "env": ["code-review-graph CLI on PATH (pip install code-review-graph); else set command to the absolute path of code-review-graph.exe"], "purpose": "Local knowledge-graph for token-efficient review: blast-radius / impact / test-coverage queries. Backs the review-changes, explore-codebase, refactor-safely, debug-issue skills. Run `code-review-graph build` once per repo to create .code-review-graph/." },
+    "postgres":        { "status": "catalogue", "env": ["POSTGRES_MCP_URL"], "enable": "Define in root .mcp.json + enabledMcpjsonServers once a PG schema exists.", "purpose": "Inspect live schema/indexes before writing migrations." },
+    "schema-registry": { "status": "catalogue", "env": ["SCHEMA_REGISTRY_MCP_URL"], "enable": "Define + enable once Schema Registry is deployed.", "purpose": "Query registered Avro schemas / check compatibility." },
+    "jira":            { "status": "catalogue", "env": ["JIRA_MCP_URL", "JIRA_TOKEN"], "enable": "Define + enable to read ticket descriptions / acceptance criteria.", "purpose": "Issue tracker integration." }
   }
 }

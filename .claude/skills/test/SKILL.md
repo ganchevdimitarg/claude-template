@@ -43,8 +43,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob
           .until(() -> repo.findByCorrelationId(id).isPresent());
    ```
 6. Observability in tests: verify MDC keys are set/cleared; assert metrics incremented where relevant.
-7. Run: `./mvnw test -pl <module>`
-8. Check coverage: `./mvnw verify -pl <module>` — gate is 80% line, 100% domain model.
+7. Run: `./mvnw test`
+8. Check coverage: `./mvnw verify` — gate is 80% line, 100% domain model.
 9. Fix all failures. Repeat until suite is fully green.
 
 ## Avro / Kafka integration tests

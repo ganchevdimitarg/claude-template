@@ -1,4 +1,4 @@
-# MongoDB patterns (catalog-service only)
+# MongoDB patterns (<service-name> only)
 
 ## Document with indexes
 ```java

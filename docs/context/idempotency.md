@@ -10,7 +10,7 @@ public ResponseEntity<OrderResponse> create(
         @RequestHeader("Idempotency-Key") UUID idempotencyKey,
         @RequestBody @Valid CreateOrderCommand cmd) {
 
-    String redisKey = "idempotency:order-service:" + idempotencyKey;
+    String redisKey = "idempotency:<service-name>:" + idempotencyKey;
 
     // Check cache for existing response
     OrderResponse cached = redis.opsForValue().get(redisKey);

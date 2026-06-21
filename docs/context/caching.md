@@ -4,7 +4,7 @@ Do NOT use Spring `@Cacheable` — use explicit Redis cache-aside.
 
 ## Cache-aside pattern
 ```java
-private String key(UUID id) { return "order-service:order:" + id; }
+private String key(UUID id) { return "<service-name>:order:" + id; }
 
 public Order getOrder(UUID id) {
     return Optional.ofNullable(redis.opsForValue().get(key(id)))
@@ -29,9 +29,9 @@ public Order updateOrder(UUID id, UpdateOrderCommand cmd) {
 
 ## Event-driven invalidation
 ```java
-@KafkaListener(topics = "product.product.updated", groupId = "catalog-service-group")
+@KafkaListener(topics = "product.product.updated", groupId = "<service-name>-group")
 void onProductUpdated(ProductUpdatedEvent event) {
-    redis.delete("catalog-service:product:" + event.productId());
+    redis.delete("<service-name>:product:" + event.productId());
 }
 ```
 
